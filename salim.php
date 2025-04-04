@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head> 
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Tir à la Fléchette Pro</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            touch-action: manipulation;
+            font-family: Arial, sans-serif;
+            background-color: #000;
+        }
+
+        #gameContainer {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #background {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image: url('/images/villagefond.png');
+            background-size: cover;
+            background-position: center;
+        }
+
+        #target {
+            position: absolute;
+            width: 140px;
+            height: 140px;
+            border-radius: 100%;
+            background-image: url('/images/cible.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            transition: transform 0.1s;
+        }
+
+        #dart {
+            position: absolute;
+            width: 4px;
+            height: 40px;
+            background-color: #8B4513; /* Marron */
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            border-radius: 2px;
+        }
+
+        #crosshair {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border: 2px solid rgba(255, 255, 255, 0.7);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        #scorePanel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            font-size: 18px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 20;
+        }
+
+        #levelPanel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: white;
+            font-size: 18px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 20;
+        }
+
+        #instructions {
+            position: absolute;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            text-align: center;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 20;
+            font-size: 16px;
+            transition: opacity 1s;
+        }
+
+        .hitMarker {
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            background-color: red;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 15;
+        }
+
+        .scorePopup {
+            position: absolute;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            text-shadow: 1px 1px 3px black;
+            transform: translate(-50%, -50%);
+            animation: scoreFade 1.5s forwards;
+            z-index: 16;
+        }
+
+        @keyframes scoreFade {
+            0% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(0.5);
+            }
+
+            50% {
+                opacity: 1;
+                transform: translate(-50%, -100%) scale(1.2);
+            }
+
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -150%) scale(0.8);
+            }
+        }
+
+        #progressContainer {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            height: 10px;
+            background-color: rgba(0, 0, 0, 0.5);
+            border-radius: 5px;
+            z-index: 20;
+        }
+
+        #progressBar {
+            height: 100%;
+            width: 0%;
+            background-color: #4CAF50;
+            border-radius: 5px;
+            transition: width 0.3s;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="gameContainer">
+        <div id="background"></div>
+        <div id="target"></div>
+        <div id="crosshair"></div>
+        <div id="dart"></div>
+        <div id="scorePanel">
+            Score: <span id="scoreDisplay">0</span><br>
+            Dernier tir: <span id="lastShot">-</span>
+        </div>
+        <div id="levelPanel">
+            Niveau: <span id="levelDisplay">1</span><br>
+            Prochain niveau: <span id="nextLevel">100</span>
+        </div>
+        <div id="instructions">Cliquez pour activer le son<br>Bougez votre téléphone pour viser<br>Tapez pour tirer
+        </div>
+        <div id="progressContainer">
+            <div id="progressBar"></div>
+        </div>
+    </div>
+
+    <script>
+        // Variables du jeu
+        let score = 0;
+        let canShoot = true;
+        let audioContext;
+        let oscillator;
+        let gainNode;
+        let soundEnabled = false;
+        let level = 1;
+        let nextLevelThreshold = 100;
+        let lastShotPoints = 0;
+
+        // Éléments du DOM
+        const gameContainer = document.getElementById('gameContainer');
+        const target = document.getElementById('target');
+        const dart = document.getElementById('dart');
+        const crosshair = document.getElementById('crosshair');
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const lastShotDisplay = document.getElementById('lastShot');
+        const levelDisplay = document.getElementById('levelDisplay');
+        const nextLevelDisplay = document.getElementById('nextLevel');
+        const instructions = document.getElementById('instructions');
+        const progressBar = document.getElementById('progressBar');
+
+        // Position de la cible
+        let targetX = 0;
+        let targetY = 0;
+
+        // Position du viseur
+        let crosshairX = 0;
+        let crosshairY = 0;
+
+        // Initialisation du jeu
+        function initGame() {
+            // Position initiale de la cible
+            targetX = window.innerWidth / 2;
+            targetY = window.innerHeight / 2;
+
+            // Mise à jour de l'affichage du niveau
+            updateLevelDisplay();
+
+            // Écouteurs d'événements
+            if (window.DeviceOrientationEvent) {
+                window.addEventListener('deviceorientation', handleOrientation);
+            } else {
+                instructions.textContent = "Votre appareil ne supporte pas les contrôles par mouvement";
+            }
+
+            gameContainer.addEventListener('click', function () {
+                if (!soundEnabled) {
+                    soundEnabled = true;
+                    initAudio();
+                    instructions.textContent = "Bougez votre téléphone pour viser\nTapez pour tirer";
+                    return;
+                }
+                shootDart();
+            });
+
+            // Masquer les instructions après 5 secondes
+            setTimeout(() => {
+                instructions.style.opacity = '0';
+                setTimeout(() => {
+                    instructions.style.display = 'none';
+                }, 1000);
+            }, 5000);
+
+            // Animation du jeu
+            gameLoop();
+        }
+
+        // Initialisation de l'audio
+        function initAudio() {
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                gainNode = audioContext.createGain();
+                gainNode.gain.value = 0;
+                gainNode.connect(audioContext.destination);
+            } catch (e) {
+                console.error("Erreur d'initialisation audio:", e);
+            }
+        }
+
+        // Mise à jour de l'affichage du niveau
+        function updateLevelDisplay() {
+            levelDisplay.textContent = level;
+            nextLevelDisplay.textContent = nextLevelThreshold;
+            progressBar.style.width = `${(score / nextLevelThreshold) * 100}%`;
+        }
+
+        // Vérification du niveau
+        function checkLevelUp() {
+            if (score >= nextLevelThreshold) {
+                level++;
+                nextLevelThreshold = Math.floor(nextLevelThreshold * 1.5); // Augmentation progressive
+                updateLevelDisplay();
+
+                // Réduire légèrement la taille de la cible pour augmenter la difficulté
+                const newSize = Math.max(120, 180 - (level * 5));
+                target.style.width = `${newSize}px`;
+                target.style.height = `${newSize}px`;
+
+                // Feedback visuel
+                const levelUpPopup = document.createElement('div');
+                levelUpPopup.className = 'scorePopup';
+                levelUpPopup.textContent = `Niveau ${level} !`;
+                levelUpPopup.style.left = `${targetX}px`;
+                levelUpPopup.style.top = `${targetY}px`;
+                gameContainer.appendChild(levelUpPopup);
+
+                setTimeout(() => {
+                    gameContainer.removeChild(levelUpPopup);
+                }, 1500);
+            }
+        }
+
+        // Gestion de l'orientation du téléphone
+        function handleOrientation(event) {
+            if (!soundEnabled) return;
+
+            const beta = event.beta;
+            const gamma = event.gamma;
+
+            crosshairX = (gamma / 90) * (window.innerWidth / 2) + (window.innerWidth / 2);
+            crosshairY = (beta / 180) * (window.innerHeight / 2) + (window.innerHeight / 2);
+
+            crosshairX = Math.max(0, Math.min(window.innerWidth, crosshairX));
+            crosshairY = Math.max(0, Math.min(window.innerHeight, crosshairY));
+
+            crosshair.style.left = `${crosshairX}px`;
+            crosshair.style.top = `${crosshairY}px`;
+
+            updateAudioFeedback();
+        }
+
+        function vibrate(duration) {
+            if (navigator.vibrate) {
+                navigator.vibrate(duration);
+            }
+        }
+
+        function updateAudioFeedback() {
+            if (!audioContext || !canShoot) return;
+
+            const dx = crosshairX - targetX;
+            const dy = crosshairY - targetY;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            const maxDistance = Math.min(window.innerWidth, window.innerHeight) / 2;
+            const normalizedDistance = Math.min(distance / maxDistance, 1);
+
+            const frequency = 1000 - (normalizedDistance * 900);
+            const volume = 0.8 - (normalizedDistance * 0.75);
+
+            try {
+                if (!oscillator) {
+                    oscillator = audioContext.createOscillator();
+                    oscillator.type = 'sine';
+                    oscillator.frequency.value = frequency;
+                    oscillator.connect(gainNode);
+                    oscillator.start();
+                } else {
+                    oscillator.frequency.value = frequency;
+                }
+
+                gainNode.gain.value = volume;
+            } catch (e) {
+                console.error("Erreur audio:", e);
+            }
+        }
+
+        function shootDart() {
+            if (!canShoot || !soundEnabled) return;
+
+            canShoot = false;
+            vibrate(50);
+
+            if (oscillator) {
+                oscillator.stop();
+                oscillator.disconnect();
+                oscillator = null;
+            }
+
+            dart.style.transition = 'transform 0.3s';
+            dart.style.transform = 'translateX(-50%) scale(0.5)';
+
+            setTimeout(() => {
+                const hitX = crosshairX;
+                const hitY = crosshairY;
+
+                const dx = hitX - targetX;
+                const dy = hitY - targetY;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                const targetSize = parseInt(target.style.width) || 180;
+                lastShotPoints = Math.max(0, 10 - Math.floor(distance / (targetSize / 15)));
+
+                score += lastShotPoints;
+                scoreDisplay.textContent = score;
+                lastShotDisplay.textContent = lastShotPoints;
+
+                // Vérifier si on passe au niveau suivant
+                checkLevelUp();
+
+                // Afficher le score du tir
+                const scorePopup = document.createElement('div');
+                scorePopup.className = 'scorePopup';
+                scorePopup.textContent = `+${lastShotPoints}`;
+                scorePopup.style.left = `${hitX}px`;
+                scorePopup.style.top = `${hitY}px`;
+                gameContainer.appendChild(scorePopup);
+
+                setTimeout(() => {
+                    gameContainer.removeChild(scorePopup);
+                }, 1500);
+
+                // Marqueur d'impact
+                const hitMarker = document.createElement('div');
+                hitMarker.className = 'hitMarker';
+                hitMarker.style.left = `${hitX}px`;
+                hitMarker.style.top = `${hitY}px`;
+                gameContainer.appendChild(hitMarker);
+
+                setTimeout(() => {
+                    hitMarker.style.opacity = '1';
+                    setTimeout(() => {
+                        hitMarker.style.opacity = '0';
+                        setTimeout(() => {
+                            gameContainer.removeChild(hitMarker);
+                        }, 300);
+                    }, 500);
+                }, 10);
+
+                setTimeout(() => {
+                    dart.style.transition = 'transform 0.5s';
+                    dart.style.transform = 'translateX(-50%) scale(1)';
+
+                    setTimeout(() => {
+                        canShoot = true;
+                    }, 500);
+                }, 300);
+            }, 300);
+        }
+
+        function gameLoop() {
+            requestAnimationFrame(gameLoop);
+        }
+
+        window.addEventListener('load', initGame);
+    </script>
+</body>
+
+</html>
