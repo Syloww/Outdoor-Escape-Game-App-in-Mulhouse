@@ -20,24 +20,13 @@ Locations
 <br>
 Challenges & Puzzles
 - Time limits, precision-based scoring.
-- Progression System
-Unlock new levels by completing challenges.
-Scoring & Leaderboards
-Points based on speed/accuracy.
-Local leaderboards.
+<br>
+Progression System
+- Unlock new levels by completing challenges.
+- Scoring & Leaderboards
+- Points based on speed/accuracy.
+- Local leaderboards.
+<br>
 Graphics & UI
-Clean, intuitive interface.
-2D visuals.
-Audio & Visuals
-Sound effects for feedback.
-Simple animations.
-Safety Considerations
-Encourages awareness of surroundings.
-Testing & Feedback
-Beta testing with friends.
-Legal Considerations
-GDPR compliance.
-Location usage permissions.
-Maintenance & Support
-Regular updates.
-Bug fixes based on feedback.
+- Clean, intuitive interface.
+- 2D visuals.
