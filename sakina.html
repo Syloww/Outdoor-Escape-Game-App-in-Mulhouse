@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Balloon Pop Expert</title>
+    <link rel="stylesheet" href="sakina.css">
+
+</head>
+<body>
+    <div id="particles"></div>
+    
+    <div id="game-container">
+        <div id="audio-indicator">
+            <div id="audio-level"></div>
+        </div>
+        
+        <div id="trap-warning">DANGER - PIÈGE DÉTECTÉ !</div>
+        
+        <div id="timer">Temps: 60s</div>
+        <div id="score-display">Score: 0</div>
+        
+        <div id="game-area">
+            <!-- Ballons invisibles placés ici -->
+            <div id="frequency-container">
+                <svg id="frequency-wave" viewBox="0 0 500 100" preserveAspectRatio="none">
+                    <path id="wave-path" d="M0,50 Q125,50 250,50 T500,50"></path>
+                </svg>
+            </div>
+        </div>
+    </div>
+    <script src="sakina.js"></script>
