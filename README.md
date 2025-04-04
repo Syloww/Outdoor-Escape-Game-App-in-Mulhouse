@@ -64,8 +64,5 @@ Players complete challenges to "escape" or unlock new areas of the city.
 
 ---
 
-## 📥 Installation  
-To run the project locally:  
-
 ```sh
 GLENAC SALIM
