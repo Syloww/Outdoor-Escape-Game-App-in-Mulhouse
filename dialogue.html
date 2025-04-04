@@ -20,35 +20,61 @@
         const phrases = [
             "Before I tell you my story, come and see me at the mirror door.",
             "Here I am in front of the Mirror Gate... Did you know that this place has quite a history? It all began in 1852 with Madame Koechlin, a great lady of Mulhouse. She set up the Comités de Patronage to help people in their own homes. In 1923, this district became the Patronage du Quartier Sud, then in 1957, the Centre Social Pont d'Altkirch, thanks to Madame Dolfus. It was a place for care and meetings...",
-            "...but today it's also a place where some mad scientists put this tracking collar on me! I've managed to escape from their lab, but to really be free, I have to deactivate three modules hidden around Mulhouse. And guess what? The first is right here, in this garden full of mysteries. So let's get on with the adventure!"
+            "...but today it's also a place where some mad scientists put this tracking collar on me! I've managed to escape from their lab, but to really be free, I have to deactivate three modules hidden around Mulhouse. And guess what? The first is right here, in this garden full of mysteries. So let's get on with the adventure!",
+            "First, off to the Garden of Fragrance! The first module is hidden away in a corner. Use the map to find your way!",
+            "Created in 1987, this 1,500 m² garden was designed by ophthalmologist Dr Rolf Benner to help blind and partially sighted people use their sense of smell and touch to find their way around.",
+            "I'm allergic to pollen, so I can hardly see anything. I have to pop all the balloons by following their sound: only the ones that beep sharply! The others are trapped and spread pollen. By ear and sneezing, I pop them one by one until the last one explodes.",
+            "Yippee! I did it! Thanks for helping me!!! Now cape to the Gambrinus!",
+            "Here I am in front of the Gambrinus, the liveliest bar in Mulhouse. My sensor is flashing: to deactivate it, you have to pour EXACTLY the right amount into the marked glass!",
+            "Yippee! I did it! Thank you for helping me! Finally, we meet on the place de la reunion opposite the historical museum.",
+            "The statue on the Place de la Réunion in Mulhouse represents William Tell, the legendary Swiss hero. According to tradition, he was forced by the Austrian governor Gessler to shoot an arrow at an apple placed on his son's head. His perfect shot made him a symbol of resistance and freedom. This statue is a reminder of the historic links between Mulhouse and Switzerland, before the town joined France in 1798.",
+            "I've almost done it! The collar is half deactivated, but to blow it up DEFINITELY, I still have to do the ultimate test: The Dart Shot",
+            "Yippee! I did it! Thank you for helping me!!! Now I'm going back to my life as a heroic pigeon! Maybe one day we'll meet up again for a new adventure... In the meantime, stay smart like a pigeon!"
         ];
         
         const dialogueElement = document.getElementById('dialogue-text');
         let phraseIndex = 0;
         let charIndex = 0;
+        let isTyping = false;
         
         function typeWriter() {
+            isTyping = true;
             if (phraseIndex < phrases.length) {
                 if (charIndex < phrases[phraseIndex].length) {
                     dialogueElement.innerHTML += phrases[phraseIndex].charAt(charIndex);
                     charIndex++;
-                    setTimeout(typeWriter, 50); // Augmenté à 50ms entre chaque lettre (au lieu de 20)
+                    setTimeout(typeWriter, 50);
                 } else {
-                    // Passage à la phrase suivante après 1 seconde (au lieu de 0.5)
-                    phraseIndex++;
-                    charIndex = 0;
-                    if (phraseIndex < phrases.length) {
-                        setTimeout(typeWriter, 1000); // Délai augmenté à 1s entre les phrases
-                        dialogueElement.innerHTML = ''; // Efface la boîte de dialogue
-                    }
+                    isTyping = false;
+                    // On attend le clic pour passer à la phrase suivante
                 }
+            }
+        }
+        
+        function nextPhrase() {
+            if (isTyping) {
+                // Si on est en train d'écrire, on termine immédiatement la phrase courante
+                dialogueElement.innerHTML = phrases[phraseIndex];
+                charIndex = phrases[phraseIndex].length;
+                isTyping = false;
+                return;
+            }
+            
+            phraseIndex++;
+            charIndex = 0;
+            dialogueElement.innerHTML = '';
+            if (phraseIndex < phrases.length) {
+                typeWriter();
             }
         }
         
         // Démarrer l'animation après le chargement de la page
         window.onload = function() {
-            setTimeout(typeWriter, 500); // Délai avant de commencer inchangé
+            setTimeout(typeWriter, 500);
         };
+        
+        // Gestion du clic sur l'écran
+        document.addEventListener('click', nextPhrase);
     </script>
 </body>
 
