@@ -121,12 +121,23 @@ h1 {
 }
 
 /* Styles pour les bâtiments et l'église */
+.church-container {
+    position: fixed;
+    bottom: 4%;
+    left: 0;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    z-index: 1; /* Changé de 9 à 1 */
+    pointer-events: none;
+}
+
 .building-container {
     position: fixed;
     bottom: 0;
     left: 0;
     width: 100%;
-    z-index: 3;
+    z-index: 2; /* Gardé à 2 (mais maintenant supérieur à l'église) */
     overflow: hidden;
     pointer-events: none;
 }
@@ -139,18 +150,9 @@ h1 {
     transform: translateY(100%);
     opacity: 0;
     pointer-events: none;
+    z-index: 2;
 }
 
-.church-container {
-    position: fixed;
-    bottom: 4%;
-    left: 0;
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    z-index: 9;
-    pointer-events: none;
-}
 
 .church-img {
     width: 100%;
@@ -158,6 +160,7 @@ h1 {
     transform: translateY(100%);
     opacity: 0;
     pointer-events: none;
+    z-index: 3;
 }
 
 .show-buildings .building-img {
