@@ -13,6 +13,11 @@ body {
     background-repeat: no-repeat;
     overflow-x: hidden;
 }
+h1{
+  font-family: "Jersey 10", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
 
 .preloader {
     display: flex;
