@@ -1,6 +1,7 @@
 # Outdoor-Escape-Game-App-in-Mulhouse
 Introduction Background of the Project Total immersion in Mulhouse, without the need for augmented reality.
-Platform
+
+<br>Platform
 - iOS & Android.
 Game Concept
 Three mini-games:
