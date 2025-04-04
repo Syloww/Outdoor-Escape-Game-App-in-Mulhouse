@@ -581,7 +581,7 @@
                     images/ChatGPT_Image_2_avr._2025_11_47_07_w87eeo_c_scale,w_1019.png 1019w,
                     images/ChatGPT_Image_2_avr._2025_11_47_07_w87eeo_c_scale,w_1023.png 1023w,
                     images/ChatGPT_Image_2_avr._2025_11_47_07_w87eeo_c_scale,w_1024.png 1024w">
-            <images sizes="100vw" srcset="
+            <img sizes="100vw" srcset="
                 images/ChatGPT_Image_2_avr._2025_11_47_07_w87eeo_c_scale,w_200.png 200w,
                 images/ChatGPT_Image_2_avr._2025_11_47_07_w87eeo_c_scale,w_335.png 335w,
                 images/ChatGPT_Image_2_avr._2025_11_47_07_w87eeo_c_scale,w_442.png 442w,
@@ -598,7 +598,7 @@
                 images/ChatGPT_Image_2_avr._2025_11_47_07_w87eeo_c_scale,w_1019.png 1019w,
                 images/ChatGPT_Image_2_avr._2025_11_47_07_w87eeo_c_scale,w_1023.png 1023w,
                 images/ChatGPT_Image_2_avr._2025_11_47_07_w87eeo_c_scale,w_1024.png 1024w"
-                src="ChatGPT_Image_2_avr._2025_11_47_07_w87eeo_c_scale,w_1024.png" alt="Background image">
+                src="images/ChatGPT_Image_2_avr._2025_11_47_07_w87eeo_c_scale,w_1024.png" alt="Background image">
         </picture>
     </div>
     <div class="landscape-warning">
@@ -684,6 +684,19 @@
         <button id="startBtn">Commencer</button>
     </div>
 
+    <!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jeu de précision - Remplissage de verre</title>
+    <style>
+        /* Vos styles existants... */
+    </style>
+</head>
+<body>
+    <!-- Votre HTML existant... -->
+
     <script>
         // Éléments du DOM
         const sourceBottle = document.getElementById('sourceBottle');
@@ -725,44 +738,45 @@
         let targetTolerance = 15;
         let isPouring = false;
         let gameActive = false;
-        let currentGamma = 0; // Changé de beta à gamma pour la rotation horizontale
+        let currentGamma = 0;
         let gameOver = false;
         let lastBeerHeight = 0;
         const WINNING_SCORE = 1000;
         let lastPourTime = 0;
-        const POUR_RATE_BASE = 0.1; // Taux de base
-        const POUR_RATE_MULTIPLIER = 0.02; // Multiplicateur en fonction de l'inclinaison
+        const POUR_RATE_BASE = 0.1;
+        const POUR_RATE_MULTIPLIER = 0.02;
 
         // Audio context et variables pour le son
         let audioContext;
-        let oscillator;
+        let audioBuffer;
+        let sourceNode;
         let gainNode;
         let isSoundPlaying = false;
-        let lastBeerPercentage = 0;
         let audioInitialized = false;
 
         // Initialiser l'audio context après une interaction utilisateur
         function initAudio() {
-            // Vérifier si l'audio est déjà initialisé
             if (audioInitialized) return;
 
             try {
-                // Créer le contexte audio
                 audioContext = new (window.AudioContext || window.webkitAudioContext)();
-
-                // Configurer les nœuds audio
-                gainNode = audioContext.createGain();
-                gainNode.gain.value = 0; // Commencer avec le son coupé
-                gainNode.connect(audioContext.destination);
-
-                oscillator = audioContext.createOscillator();
-                oscillator.type = 'sine';
-                oscillator.frequency.value = 220; // Fréquence de départ (grave)
-                oscillator.connect(gainNode);
-                oscillator.start();
-
-                isSoundPlaying = true;
-                audioInitialized = true;
+                
+                // Charger le son du verre qui se remplit
+                fetch('son/sonEau.mp4')
+                    .then(response => response.arrayBuffer())
+                    .then(arrayBuffer => audioContext.decodeAudioData(arrayBuffer))
+                    .then(decodedAudio => {
+                        audioBuffer = decodedAudio;
+                        audioInitialized = true;
+                        
+                        // Configurer le gain node
+                        gainNode = audioContext.createGain();
+                        gainNode.gain.value = 0;
+                        gainNode.connect(audioContext.destination);
+                    })
+                    .catch(error => {
+                        console.error("Erreur de chargement audio:", error);
+                    });
             } catch (e) {
                 console.error("Erreur d'initialisation audio:", e);
             }
@@ -770,51 +784,52 @@
 
         // Mettre à jour le son en fonction du niveau de remplissage
         function updateSound(currentBeerPercentage) {
-            // Si l'audio n'est pas initialisé, ne rien faire
-            if (!audioInitialized || !audioContext || !oscillator || !gainNode) return;
+            if (!audioInitialized || !audioContext || !audioBuffer || !gainNode) return;
 
             // Calculer la distance à la cible
             const targetHeight = targetGlass.offsetHeight * (targetPercentage / 100);
             const currentHeight = targetGlass.offsetHeight * (currentBeerPercentage / 100);
             const distanceToTarget = Math.abs(currentHeight - targetHeight);
-            const maxDistance = targetGlass.offsetHeight * 0.5; // Distance maximale pour l'effet sonore
+            const maxDistance = targetGlass.offsetHeight * 0.5;
 
-            // Normaliser la distance (0 = très proche, 1 = très loin)
-            const normalizedDistance = Math.min(1, distanceToTarget / maxDistance);
+            // Normaliser la distance (0 = très loin, 1 = très proche)
+            const normalizedProximity = 1 - Math.min(1, distanceToTarget / maxDistance);
 
-            // Inverser pour que 0 = loin (son grave), 1 = proche (son aigu)
-            const proximity = 1 - normalizedDistance;
+            // Si on est en train de verser et que le son n'est pas déjà en cours
+            if (isPouring && !isSoundPlaying) {
+                sourceNode = audioContext.createBufferSource();
+                sourceNode.buffer = audioBuffer;
+                sourceNode.loop = true;
+                sourceNode.connect(gainNode);
+                sourceNode.start();
+                isSoundPlaying = true;
+            }
 
-            // Ajuster la fréquence (220Hz à 880Hz)
-            const minFreq = 220;
-            const maxFreq = 880;
-            oscillator.frequency.value = minFreq + (maxFreq - minFreq) * proximity;
-
-            // Ajuster le volume en fonction de l'inclinaison
+            // Ajuster le volume en fonction de la proximité avec la cible
             const minVolume = 0.1;
-            const maxVolume = 0.5;
-            gainNode.gain.value = minVolume + (maxVolume - minVolume) * (currentGamma / 90);
+            const maxVolume = 0.8;
+            gainNode.gain.value = minVolume + (maxVolume - minVolume) * normalizedProximity;
 
-            // Stocker le dernier pourcentage pour le suivi
-            lastBeerPercentage = currentBeerPercentage;
+            // Ajuster la vitesse de lecture en fonction de l'inclinaison
+            if (sourceNode) {
+                const minPlaybackRate = 0.8;
+                const maxPlaybackRate = 1.5;
+                sourceNode.playbackRate.value = minPlaybackRate + (maxPlaybackRate - minPlaybackRate) * (currentGamma / 90);
+            }
         }
 
         // Arrêter le son
         function stopSound() {
+            if (sourceNode) {
+                sourceNode.stop();
+                isSoundPlaying = false;
+            }
             if (gainNode) {
                 gainNode.gain.value = 0;
             }
         }
 
-        // Modifier le gestionnaire du bouton start pour initialiser l'audio
-        startBtn.addEventListener('click', () => {
-            tutorialScreen.style.display = 'none';
-            gameActive = true;
-            // Initialiser l'audio après le clic utilisateur
-            initAudio();
-        });
-
-        // Modifier la fonction initGame pour ne pas initialiser l'audio directement
+        // Initialiser le jeu
         function initGame() {
             currentLevel = 1;
             score = 0;
@@ -903,32 +918,29 @@
             progressBar.textContent = `${totalScore}/${WINNING_SCORE}`;
         }
 
-        // Gestion de l'inclinaison (modifié pour utiliser gamma)
+        // Gestion de l'inclinaison
         function handleOrientation(event) {
             if (!gameActive || gameOver) return;
 
-            // Utilisation de gamma pour la rotation horizontale (inclinaison gauche/droite)
             currentGamma = event.gamma;
             updateTiltIndicator(currentGamma);
 
-            // Seuil d'inclinaison vers la droite (gamma positif)
             if (currentGamma > 10 && currentGamma < 90 && parseFloat(sourceBeer.style.height) > 0) {
                 if (!isPouring) {
                     isPouring = true;
                     lastPourTime = Date.now();
+                    initAudio();
                 }
 
                 const bottleAngle = Math.min(60, currentGamma);
                 sourceBottle.style.transform = `translateX(-90%) rotate(${bottleAngle}deg)`;
 
-                // Calcul du taux de transfert en fonction de l'inclinaison et du temps
                 const now = Date.now();
                 const deltaTime = now - lastPourTime;
                 lastPourTime = now;
 
-                // Le taux de transfert augmente avec l'inclinaison et le temps
-                const inclinationFactor = Math.pow(currentGamma / 90, 2); // Carré pour une réponse non linéaire
-                const timeFactor = Math.min(1, deltaTime / 1000); // Facteur temps (max 1s)
+                const inclinationFactor = Math.pow(currentGamma / 90, 2);
+                const timeFactor = Math.min(1, deltaTime / 1000);
                 const transferRate = POUR_RATE_BASE + (POUR_RATE_MULTIPLIER * inclinationFactor * timeFactor * currentGamma);
 
                 transferBeer(transferRate);
@@ -941,7 +953,7 @@
             }
         }
 
-        // Mettre à jour l'indicateur de tilt (modifié pour le mouvement horizontal)
+        // Mettre à jour l'indicateur de tilt
         function updateTiltIndicator(gamma) {
             const tiltX = Math.min(90, Math.max(0, gamma)) / 90 * 100;
             tiltHandle.style.transform = `translate(calc(-50% + ${tiltX}px), -50%)`;
@@ -965,8 +977,6 @@
             currentTargetHeight = Math.min(100, currentTargetHeight + adjustedRate);
 
             targetBeer.style.height = `${currentTargetHeight}%`;
-
-            // Mettre à jour le son en fonction du niveau de remplissage
             updateSound(currentTargetHeight);
 
             if (Math.random() < 0.3) {
@@ -1040,6 +1050,7 @@
             gameOverScreen.style.display = 'flex';
         }
 
+        // Écouteurs d'événements
         validateBtn.addEventListener('click', () => {
             if (!gameActive || gameOver) return;
 
@@ -1072,12 +1083,6 @@
             initGame();
         }
 
-        // Fonction utilitaire pour mapper une valeur d'une plage à une autre
-        function mapRange(value, inMin, inMax, outMin, outMax) {
-            return (value - inMin) * (outMax - outMin) / (inMax - inMin) + outMin;
-        }
-
-        // Écouteurs d'événements
         window.addEventListener('deviceorientation', handleOrientation);
         restartBtn.addEventListener('click', restartLevel);
         resetBtn.addEventListener('click', resetGame);
@@ -1146,10 +1151,8 @@
         // Vérifier l'orientation au chargement
         function checkOrientation() {
             if (window.innerHeight < window.innerWidth) {
-                // En mode paysage, afficher le message
                 document.querySelector('.landscape-warning').style.display = 'flex';
             } else {
-                // En mode portrait, masquer le message
                 document.querySelector('.landscape-warning').style.display = 'none';
             }
         }
@@ -1164,6 +1167,7 @@
             lockOrientation();
         });
     </script>
+
 </body>
 
 </html>
