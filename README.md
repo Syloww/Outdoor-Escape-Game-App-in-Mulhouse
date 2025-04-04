@@ -3,7 +3,6 @@
 ![GitHub repo size](https://img.shields.io/github/repo-size/Syloww/Outdoor-Escape-Game-App-in-Mulhouse?color=blue&label=Repo%20Size)  
 ![GitHub issues](https://img.shields.io/github/issues/Syloww/Outdoor-Escape-Game-App-in-Mulhouse)  
 ![GitHub stars](https://img.shields.io/github/stars/Syloww/Outdoor-Escape-Game-App-in-Mulhouse?style=social)  
-![GitHub license](https://img.shields.io/github/license/Syloww/Outdoor-Escape-Game-App-in-Mulhouse)  
 
 ---
 
