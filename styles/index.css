@@ -6,12 +6,19 @@
 
 body {
     font-family: Arial, Helvetica, sans-serif;
-    background: url(images/fond.png);
+    background: url(https://syloww.github.io/Outdoor-Escape-Game-App-in-Mulhouse/images/fond.png);
     min-height: 100vh;
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
     overflow-x: hidden;
+}
+h1{
+  color : #FFF;
+  text-align : center;
+  font-family: "Jersey 10", sans-serif;
+  font-weight: 400;
+  font-style: normal;
 }
 
 .preloader {
