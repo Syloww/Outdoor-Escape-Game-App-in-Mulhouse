@@ -14,11 +14,13 @@ Gameplay Mechanics
 Frequency Game: Audio feedback guides players.
 Pouring Game: Gyroscope controls liquid flow.
 Steal the olive.
+<br>
 Locations
-Mulhouse city center.
+- Mulhouse city center.
+<br>
 Challenges & Puzzles
-Time limits, precision-based scoring.
-Progression System
+- Time limits, precision-based scoring.
+- Progression System
 Unlock new levels by completing challenges.
 Scoring & Leaderboards
 Points based on speed/accuracy.
