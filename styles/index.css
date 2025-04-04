@@ -13,17 +13,26 @@ body {
     background-repeat: no-repeat;
     overflow-x: hidden;
 }
-.titre{
-  display:flex;
-    flex-direction : column;
-    aligns-item:center;
-}
 
-h1{
-  color : #FFF;
-  font-family: "Jersey 10", sans-serif;
-  font-weight: 400;
-  font-style: normal;
+.titre {
+    position: fixed;
+    top: 5%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #FFF;
+    z-index: 4;
+    font-family: "Jersey 10", sans-serif;
+    font-style: normal;
+    letter-spacing: 2px;
+}
+.titre h1{
+    margin-bottom: 40px;
+    letter-spacing: 4px;
 }
 
 .preloader {
@@ -95,14 +104,17 @@ h1{
         opacity: 0;
         transform: translate(-50%, -50%) scale(0.9);
     }
+
     20% {
         opacity: 1;
         transform: translate(-50%, -50%) scale(1);
     }
+
     80% {
         opacity: 1;
         transform: translate(-50%, -50%) scale(1);
     }
+
     100% {
         opacity: 0;
         transform: translate(-50%, -50%) scale(0.9);
@@ -110,13 +122,25 @@ h1{
 }
 
 /* Styles pour les bâtiments et l'église */
+.church-container {
+    position: fixed;
+    bottom: 20%;
+    left: 0;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    z-index: 1; /* Changé de 9 à 1 */
+    pointer-events: none;
+}
+
 .building-container {
     position: fixed;
     bottom: 0;
     left: 0;
     width: 100%;
-    z-index: 10;
+    z-index: 2; /* Gardé à 2 (mais maintenant supérieur à l'église) */
     overflow: hidden;
+    pointer-events: none;
 }
 
 .building-img {
@@ -126,23 +150,18 @@ h1{
     object-fit: cover;
     transform: translateY(100%);
     opacity: 0;
+    pointer-events: none;
+    z-index: 2;
 }
 
-.church-container {
-    position: fixed;
-    bottom: 220px;
-    left: 0;
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    z-index: 9;
-}
 
 .church-img {
     width: 100%;
-    height: 250px;
+    height: auto;
     transform: translateY(100%);
     opacity: 0;
+    pointer-events: none;
+    z-index: 3;
 }
 
 .show-buildings .building-img {

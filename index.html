@@ -10,11 +10,11 @@
     <meta name="theme-color" content="#000">
     <link rel="manifest" href="manifest.json">
 
-<!--     Fonts -->
+    <!--     Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Jersey+10&display=swap" rel="stylesheet">
-    
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Jersey+10&display=swap" rel="stylesheet">
+
 
     <meta name="description" content="Preloader animé pour une meilleure expérience utilisateur">
     <title>Preloader Animé</title>
@@ -22,19 +22,21 @@
 </head>
 
 <body>
-    <div id="titre">
+    <div class="titre" id="titre">
         <h3>Discorvering</h3>
         <h1>Mulhouse</h1>
+
+        <a href="dialogue.html">
+            <svg xmlns="http://www.w3.org/2000/svg" width="90" height="90" viewBox="0 0 122 122" fill="none">
+                <path
+                    d="M96 52.3397C102.667 56.1887 102.667 65.8113 96 69.6603L51 95.641C44.3333 99.49 36 94.6788 36 86.9808L36 35.0192C36 27.3212 44.3333 22.51 51 26.359L96 52.3397Z"
+                    fill="#D9D9D9" />
+                <circle cx="61" cy="61" r="58" stroke="white" stroke-width="6" />
+            </svg>
+        </a>
     </div>
 
-    <a href="dialogue.html">
-        <svg xmlns="http://www.w3.org/2000/svg" width="122" height="122" viewBox="0 0 122 122" fill="none">
-            <path
-                d="M96 52.3397C102.667 56.1887 102.667 65.8113 96 69.6603L51 95.641C44.3333 99.49 36 94.6788 36 86.9808L36 35.0192C36 27.3212 44.3333 22.51 51 26.359L96 52.3397Z"
-                fill="#D9D9D9" />
-            <circle cx="61" cy="61" r="58" stroke="white" stroke-width="6" />
-        </svg>
-    </a>
+
 
     <div class="building-container">
         <img src="images/bat.png" alt="Bâtiments" class="building-img">
@@ -55,7 +57,7 @@
                     <path
                         d="M10.025 8a4.5 4.5 0 0 1-1.318 3.182L8 10.475A3.5 3.5 0 0 0 9.025 8c0-.966-.392-1.841-1.025-2.475l.707-.707A4.5 4.5 0 0 1 10.025 8M7 4a.5.5 0 0 0-.812-.39L3.825 5.5H1.5A.5.5 0 0 0 1 6v4a.5.5 0 0 0 .5.5h2.325l2.363 1.89A.5.5 0 0 0 7 12zM4.312 6.39 6 5.04v5.92L4.312 9.61A.5.5 0 0 0 4 9.5H2v-3h2a.5.5 0 0 0 .312-.11" />
                 </svg>
-                <h3>Allumez le son !</h3>
+                <h3>Turn up the volume !</h3>
             </div>
 
             <div class="preloader-item location-item">
@@ -64,7 +66,7 @@
                         d="M12.166 8.94c-.524 1.062-1.234 2.12-1.96 3.07A32 32 0 0 1 8 14.58a32 32 0 0 1-2.206-2.57c-.726-.95-1.436-2.008-1.96-3.07C3.304 7.867 3 6.862 3 6a5 5 0 0 1 10 0c0 .862-.305 1.867-.834 2.94M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10" />
                     <path d="M8 8a2 2 0 1 1 0-4 2 2 0 0 1 0 4m0 1a3 3 0 1 0 0-6 3 3 0 0 0 0 6" />
                 </svg>
-                <h3>Activez votre localisation !</h3>
+                <h3>Activate your location !</h3>
             </div>
         </div>
     </section>
