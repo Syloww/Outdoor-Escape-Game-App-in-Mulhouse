@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <title>Précision Verre - Jeu de Remplissage</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            touch-action: none;
+        }
+
+        body {
+            font-family: 'Arial Rounded MT Bold', 'Arial', sans-serif;
+            overflow: hidden;
+            background-image: url("images/bar.png");
+            background-size: contain;
+            /* Ajuste l'image pour qu'elle rentre totalement */
+            background-position: center;
+            background-repeat: no-repeat;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .background-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .background-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .content {
+            /* Styles pour votre contenu par-dessus l'image de fond */
+            position: relative;
+            z-index: 1;
+            color: white;
+            padding: 20px;
+        }
+
+        .game-container {
+            position: relative;
+            width: 100%;
+            height: 40%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            perspective: 1000px;
+            margin-bottom: 20px;
+        }
+
+        .info-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            text-align: center;
+            width: 100%;
+            padding: 15px 10px;
+            background-color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 15px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            font-size: 20px;
+        }
+
+        .info-item {
+            text-align: center;
+            font-weight: bold;
+            color: #333;
+            flex: 1;
+        }
+
+        .info-item span {
+            display: block;
+            font-size: 1.2em;
+            color: #2E7D32;
+        }
+
+        .bottle {
+            position: absolute;
+            width: 20vmin;
+            height: 35vmin;
+            bottom: 35vmin;
+
+            left: 30%;
+            transform: translateX(-90%) rotate(0deg);
+            border: 4px solid #333;
+            border-radius: 8px 8px 20px 20px;
+            background-color: rgba(255, 255, 255, 0.7);
+            overflow: hidden;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+            transition: transform 0.2s;
+            z-index: 2;
+        }
+
+        .glass {
+            position: absolute;
+            width: 26vmin;
+            height: 40vmin;
+            bottom: 8vmin;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 4px solid #333;
+            border-radius: 10px 10px 25px 25px;
+            background-color: rgba(255, 255, 255, 0.3);
+            overflow: hidden;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1;
+        }
+
+        .beer {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            background: linear-gradient(to top, #D4A76A, #E3B04B);
+            transition: height 0.2s ease-out;
+            will-change: height;
+            overflow: hidden;
+        }
+
+        #sourceBeer {
+            background: linear-gradient(to top, #E3B04B, #D4A76A);
+        }
+
+        .beer-surface {
+            position: absolute;
+            top: 0;
+            width: 100%;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            animation: beerShimmer 2s infinite ease-in-out;
+        }
+
+        .beer::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 15px;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 50% 50% 0 0;
+            animation: foamBubbles 3s infinite linear;
+        }
+
+        .beer-bubble {
+            position: absolute;
+            background-color: rgba(255, 255, 255, 0.6);
+            border-radius: 50%;
+            animation: bubbleRise 4s infinite ease-in;
+        }
+
+        @keyframes beerShimmer {
+
+            0%,
+            100% {
+                transform: translateY(0) scaleX(1);
+                box-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
+            }
+
+            50% {
+                transform: translateY(-3px) scaleX(1.03);
+                box-shadow: 0 0 15px rgba(255, 215, 0, 0.9);
+            }
+        }
+
+        @keyframes foamBubbles {
+            0% {
+                transform: scale(1);
+                opacity: 0.8;
+            }
+
+            50% {
+                transform: scale(1.05);
+                opacity: 1;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 0.8;
+            }
+        }
+
+        @keyframes bubbleRise {
+            0% {
+                transform: translateY(0) scale(0.4);
+                opacity: 0;
+            }
+
+            20% {
+                opacity: 0.9;
+            }
+
+            100% {
+                transform: translateY(-35vmin) scale(1.2);
+                opacity: 0;
+            }
+        }
+
+        .target-line {
+            position: absolute;
+            width: 100%;
+            height: 3px;
+            background-color: #4CAF50;
+            z-index: 3;
+            left: 0;
+            box-shadow: 0 0 5px rgba(76, 175, 80, 0.9);
+        }
+
+        .target-range {
+            position: absolute;
+            width: 100%;
+            background-color: rgba(76, 175, 80, 0.25);
+            z-index: 2;
+            left: 0;
+            border-top: 2px dashed rgba(76, 175, 80, 0.9);
+            border-bottom: 2px dashed rgba(76, 175, 80, 0.9);
+        }
+
+        .buttons-right {
+            position: relative;
+            display: flex;
+            align-items: center;
+            flex-direction: column;
+            width: 50%;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            padding: 10px;
+            margin-top: 10px;
+        }
+
+        button {
+
+            /* Réduction du padding */
+            border: none;
+            border-radius: 10px;
+            /* Coins légèrement arrondis */
+            background: linear-gradient(to bottom, #4CAF50, #2E7D32);
+            color: white;
+            font-size: 20px;
+            /* Réduction de la taille du texte */
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            transition: all 0.2s;
+            width: auto;
+            /* Ajustement automatique selon le texte */
+            height: auto;
+            min-width: 200px;
+            /* Taille minimale */
+            min-height: 50px;
+        }
+
+        button:active {
+            transform: scale(0.95);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+
+
+        button:active {
+            transform: scale(0.95);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        button:disabled {
+            background: linear-gradient(to bottom, #BDBDBD, #9E9E9E);
+            cursor: not-allowed;
+        }
+
+        #restartBtn {
+            background: linear-gradient(to bottom, #FF9800, #F57C00);
+        }
+
+        #resetBtn,
+        #retryBtn {
+            background: linear-gradient(to bottom, #ff0000, #f50000);
+        }
+
+        .level-complete,
+        .level-fail,
+        .game-over,
+        .tutorial {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            row-gap: 50px;
+            align-items: center;
+            z-index: 100;
+            color: white;
+            font-size: 24px;
+            display: none;
+            text-align: center;
+            animation: fadeIn 0.5s;
+            padding: 20px;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .level-complete h2,
+        .level-fail h2,
+        .game-over h2,
+        .tutorial h2 {
+            margin-bottom: 30px;
+            font-size: 36px;
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+        }
+
+        .level-complete h2 {
+            color: #4CAF50;
+        }
+
+        .level-fail h2 {
+            color: #F44336;
+        }
+
+        .level-complete p,
+        .level-fail p,
+        .game-over p,
+        .tutorial p {
+            margin-bottom: 20px;
+            font-size: 20px;
+            line-height: 1.5;
+        }
+
+        .tutorial button {
+            padding: 10px 20px;
+            /* Réduction du padding */
+            font-size: 16px;
+            /* Réduction de la taille du texte */
+            max-width: 200px;
+            /* Réduction de la largeur maximale */
+            min-width: 80px;
+        }
+
+        .precision-meter {
+            width: 90%;
+            height: 30px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            margin: 30px 0;
+            overflow: hidden;
+        }
+
+        .precision-fill {
+            height: 100%;
+            background: linear-gradient(to right, #FF5722, #FFC107, #4CAF50);
+            width: 0%;
+            transition: width 0.5s;
+        }
+
+        .tilt-indicator {
+            width: 200px;
+            height: 200px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            margin: 30px 0;
+            position: relative;
+            border: 3px solid rgba(255, 255, 255, 0.4);
+        }
+
+        .tilt-handle {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background-color: #4CAF50;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            transition: transform 0.1s;
+        }
+
+        .progress-container {
+            width: 95%;
+            margin: 20px auto;
+            background-color: rgba(255, 255, 255, 0.3);
+            border-radius: 15px;
+            padding: 10px;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 30px;
+            background: linear-gradient(90deg, #4CAF50 0%, #8BC34A 50%, #CDDC39 100%);
+            border-radius: 12px;
+            width: 0%;
+            transition: width 0.5s cubic-bezier(0.22, 0.61, 0.36, 1);
+            text-align: center;
+            color: white;
+            font-weight: bold;
+            line-height: 30px;
+            font-size: 16px;
+            text-shadow: 0 2px 3px rgba(0, 0, 0, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg,
+                    rgba(255, 255, 255, 0) 0%,
+                    rgba(255, 255, 255, 0.4) 50%,
+                    rgba(255, 255, 255, 0) 100%);
+            animation: shine 2s infinite;
+            transform: translateX(-100%);
+        }
+
+        @keyframes shine {
+            100% {
+                transform: translateX(100%);
+            }
+        }
+
+        /* Message pour le mode paysage */
+        .landscape-warning {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            color: white;
+            font-size: 24px;
+            text-align: center;
+            padding: 30px;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .landscape-warning p {
+            margin-bottom: 30px;
+            font-size: 20px;
+        }
+
+        @media (orientation: landscape) {
+            body {
+                overflow: hidden;
+            }
+
+            .game-container,
+            .info-panel,
+            .buttons-right,
+            .progress-container {
+                display: none;
+            }
+
+            .landscape-warning {
+                display: flex;
+            }
+        }
+
+        /* Améliorations pour le tutoriel */
+        .tutorial {
+            gap: 20px;
+        }
+
+        .tutorial h2 {
+            font-size: clamp(28px, 6vw, 42px);
+            margin-bottom: 15px;
+        }
+
+        .tutorial p {
+            font-size: clamp(16px, 4vw, 20px);
+            margin-bottom: 10px;
+            max-width: 90%;
+        }
+
+        .tilt-indicator {
+            width: clamp(120px, 40vw, 200px);
+            height: clamp(120px, 40vw, 200px);
+            margin: 20px 0;
+        }
+
+        .tilt-handle {
+            width: clamp(25px, 10vw, 40px);
+            height: clamp(25px, 10vw, 40px);
+        }
+
+        #startBtn {
+            padding: clamp(12px, 4vw, 18px) clamp(20px, 6vw, 30px);
+            font-size: clamp(16px, 4vw, 20px);
+            margin-top: 20px;
+        }
+
+        @media (max-height: 700px) {
+            .tutorial {
+                gap: 15px;
+                padding: 10px;
+            }
+
+            .tutorial h2 {
+                margin-bottom: 10px;
+            }
+
+            .tutorial p {
+                margin-bottom: 5px;
+                line-height: 1.3;
+            }
+
+            .tilt-indicator {
+                margin: 10px 0;
+            }
+
+            button {
+
+                min-width: 150px;
+                /* Taille minimale */
+                min-height: 30px;
+            }
+        }
+
+        @media (max-width: 350px) {
+            .tutorial p {
+                font-size: 14px;
+            }
+
+            #startBtn {
+                padding: 10px 15px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="background-container">
+        <picture>
+            <source media="(max-width: 1024px)" srcset="
+                    images/._2025_11_47_07_w87eeo_c_scale,w_200.png 200w,
+                    images/ChatGPT_Image_2_avr._2025_11_47_07_w87eeo_c_scale,w_335.png 335w,
+                    images/ChatGPT_Image_2_avr._2025_11_47_07_w87eeo_c_scale,w_442.png 442w,
+                    images/ChatGPT_Image_2_avr._2025_11_47_07_w87eeo_c_scale,w_524.png 524w,
+                    images/ChatGPT_Image_2_avr._2025_11_47_07_w87eeo_c_scale,w_541.png 541w,
+                    images/ChatGPT_Image_2_avr._2025_11_47_07_w87eeo_c_scale,w_737.png 737w,
+                    images/ChatGPT_Image_2_avr._2025_11_47_07_w87eeo_c_scale,w_749.png 749w,
+                    images/ChatGPT_Image_2_avr._2025_11_47_07_w87eeo_c_scale,w_779.png 779w,
+                    images/ChatGPT_Image_2_avr._2025_11_47_07_w87eeo_c_scale,w_839.png 839w,
+                    images/ChatGPT_Image_2_avr._2025_11_47_07_w87eeo_c_scale,w_866.png 866w,
+                    images/ChatGPT_Image_2_avr._2025_11_47_07_w87eeo_c_scale,w_853.png 853w,
+                    images/ChatGPT_Image_2_avr._2025_11_47_07_w87eeo_c_scale,w_966.png 966w,
+                    images/ChatGPT_Image_2_avr._2025_11_47_07_w87eeo_c_scale,w_987.png 987w,
+                    images/ChatGPT_Image_2_avr._2025_11_47_07_w87eeo_c_scale,w_1019.png 1019w,
+                    images/ChatGPT_Image_2_avr._2025_11_47_07_w87eeo_c_scale,w_1023.png 1023w,
+                    images/ChatGPT_Image_2_avr._2025_11_47_07_w87eeo_c_scale,w_1024.png 1024w">
+            <images sizes="100vw" srcset="
+                images/ChatGPT_Image_2_avr._2025_11_47_07_w87eeo_c_scale,w_200.png 200w,
+                images/ChatGPT_Image_2_avr._2025_11_47_07_w87eeo_c_scale,w_335.png 335w,
+                images/ChatGPT_Image_2_avr._2025_11_47_07_w87eeo_c_scale,w_442.png 442w,
+                images/ChatGPT_Image_2_avr._2025_11_47_07_w87eeo_c_scale,w_524.png 524w,
+                images/ChatGPT_Image_2_avr._2025_11_47_07_w87eeo_c_scale,w_541.png 541w,
+                images/ChatGPT_Image_2_avr._2025_11_47_07_w87eeo_c_scale,w_737.png 737w,
+                images/ChatGPT_Image_2_avr._2025_11_47_07_w87eeo_c_scale,w_749.png 749w,
+                images/ChatGPT_Image_2_avr._2025_11_47_07_w87eeo_c_scale,w_779.png 779w,
+                images/ChatGPT_Image_2_avr._2025_11_47_07_w87eeo_c_scale,w_839.png 839w,
+                images/ChatGPT_Image_2_avr._2025_11_47_07_w87eeo_c_scale,w_866.png 866w,
+                images/ChatGPT_Image_2_avr._2025_11_47_07_w87eeo_c_scale,w_853.png 853w,
+                images/ChatGPT_Image_2_avr._2025_11_47_07_w87eeo_c_scale,w_966.png 966w,
+                images/ChatGPT_Image_2_avr._2025_11_47_07_w87eeo_c_scale,w_987.png 987w,
+                images/ChatGPT_Image_2_avr._2025_11_47_07_w87eeo_c_scale,w_1019.png 1019w,
+                images/ChatGPT_Image_2_avr._2025_11_47_07_w87eeo_c_scale,w_1023.png 1023w,
+                images/ChatGPT_Image_2_avr._2025_11_47_07_w87eeo_c_scale,w_1024.png 1024w"
+                src="ChatGPT_Image_2_avr._2025_11_47_07_w87eeo_c_scale,w_1024.png" alt="Background image">
+        </picture>
+    </div>
+    <div class="landscape-warning">
+        <h2>Rotation requise</h2>
+        <p>Veuillez tourner votre appareil en mode portrait pour jouer.</p>
+    </div>
+
+    <div class="info-panel">
+        <div class="info-item">
+            <div>Niveau</div>
+            <span id="level">1</span>
+        </div>
+        <div class="info-item">
+            <div>Score</div>
+            <span id="score">0</span>
+        </div>
+        <div class="info-item">
+            <div>Objectif</div>
+            <span id="target">0%</span>
+        </div>
+    </div>
+
+    <div class="progress-container">
+        <div id="progressBar" class="progress-bar">0/1000</div>
+    </div>
+
+    <div class="game-container">
+        <div id="sourceBottle" class="bottle">
+            <div id="sourceBeer" class="beer" style="height: 100%;">
+                <div class="beer-surface"></div>
+            </div>
+        </div>
+        <div id="targetGlass" class="glass">
+            <div id="targetRange" class="target-range"></div>
+            <div id="targetLine" class="target-line"></div>
+            <div id="targetBeer" class="beer" style="height: 0%;">
+                <div class="beer-surface"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="buttons-right">
+        <button id="validateBtn">Valider</button>
+        <button id="restartBtn">Rejouer</button>
+        <button id="resetBtn">Reset</button>
+    </div>
+
+    <div class="level-complete">
+        <h2>Réussi!</h2>
+        <p>Précision: <span id="precisionValue">0</span>%</p>
+        <div class="precision-meter">
+            <div id="precisionFill" class="precision-fill"></div>
+        </div>
+        <p>Score: <span id="finalScore">0</span></p>
+        <button id="continueBtn">Continuer</button>
+    </div>
+
+    <div class="level-fail">
+        <h2>Raté!</h2>
+        <p>Objectif: <span id="targetLimit">0</span>%</p>
+        <p>Remplissage: <span id="actualFill">0</span>%</p>
+        <p>Précision: <span id="failPrecision">0</span>%</p>
+        <p>Points perdus: <span id="pointsLost">0</span></p>
+        <button id="retryBtn">Réessayer</button>
+    </div>
+
+    <div class="game-over">
+        <h2>Félicitations!</h2>
+        <p>Objectif atteint!</p>
+        <p>Score final: <span id="finalTotalScore">0</span></p>
+        <p>Niveaux: <span id="totalLevels">0</span></p>
+        <button id="newGameBtn">Nouvelle Partie</button>
+    </div>
+
+    <div class="tutorial">
+        <h2>Précision Verre</h2>
+        <p>Inclinez votre téléphone vers la droite pour verser la bière.</p>
+        <div class="tilt-indicator">
+            <div class="tilt-handle"></div>
+        </div>
+        <p>Atteignez la ligne verte sans dépasser!</p>
+        <p>Objectif: 1000 points.</p>
+        <button id="startBtn">Commencer</button>
+    </div>
+
+    <script>
+        // Éléments du DOM
+        const sourceBottle = document.getElementById('sourceBottle');
+        const targetGlass = document.getElementById('targetGlass');
+        const sourceBeer = document.getElementById('sourceBeer');
+        const targetBeer = document.getElementById('targetBeer');
+        const targetLine = document.getElementById('targetLine');
+        const targetRange = document.getElementById('targetRange');
+        const levelDisplay = document.getElementById('level');
+        const scoreDisplay = document.getElementById('score');
+        const targetDisplay = document.getElementById('target');
+        const restartBtn = document.getElementById('restartBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const levelCompleteScreen = document.querySelector('.level-complete');
+        const levelFailScreen = document.querySelector('.level-fail');
+        const finalScoreDisplay = document.getElementById('finalScore');
+        const precisionValue = document.getElementById('precisionValue');
+        const precisionFill = document.getElementById('precisionFill');
+        const continueBtn = document.getElementById('continueBtn');
+        const retryBtn = document.getElementById('retryBtn');
+        const targetLimitDisplay = document.getElementById('targetLimit');
+        const actualFillDisplay = document.getElementById('actualFill');
+        const tutorialScreen = document.querySelector('.tutorial');
+        const startBtn = document.getElementById('startBtn');
+        const validateBtn = document.getElementById('validateBtn');
+        const tiltHandle = document.querySelector('.tilt-handle');
+        const progressBar = document.getElementById('progressBar');
+        const gameOverScreen = document.querySelector('.game-over');
+        const finalTotalScore = document.getElementById('finalTotalScore');
+        const totalLevelsDisplay = document.getElementById('totalLevels');
+        const newGameBtn = document.getElementById('newGameBtn');
+        const pointsLostDisplay = document.getElementById('pointsLost');
+
+        // Variables du jeu
+        let currentLevel = 1;
+        let score = 0;
+        let totalScore = 0;
+        let targetPercentage = 0;
+        let targetTolerance = 15;
+        let isPouring = false;
+        let gameActive = false;
+        let currentGamma = 0; // Changé de beta à gamma pour la rotation horizontale
+        let gameOver = false;
+        let lastBeerHeight = 0;
+        const WINNING_SCORE = 1000;
+        let lastPourTime = 0;
+        const POUR_RATE_BASE = 0.1; // Taux de base
+        const POUR_RATE_MULTIPLIER = 0.02; // Multiplicateur en fonction de l'inclinaison
+
+        // Audio context et variables pour le son
+        let audioContext;
+        let oscillator;
+        let gainNode;
+        let isSoundPlaying = false;
+        let lastBeerPercentage = 0;
+        let audioInitialized = false;
+
+        // Initialiser l'audio context après une interaction utilisateur
+        function initAudio() {
+            // Vérifier si l'audio est déjà initialisé
+            if (audioInitialized) return;
+
+            try {
+                // Créer le contexte audio
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+                // Configurer les nœuds audio
+                gainNode = audioContext.createGain();
+                gainNode.gain.value = 0; // Commencer avec le son coupé
+                gainNode.connect(audioContext.destination);
+
+                oscillator = audioContext.createOscillator();
+                oscillator.type = 'sine';
+                oscillator.frequency.value = 220; // Fréquence de départ (grave)
+                oscillator.connect(gainNode);
+                oscillator.start();
+
+                isSoundPlaying = true;
+                audioInitialized = true;
+            } catch (e) {
+                console.error("Erreur d'initialisation audio:", e);
+            }
+        }
+
+        // Mettre à jour le son en fonction du niveau de remplissage
+        function updateSound(currentBeerPercentage) {
+            // Si l'audio n'est pas initialisé, ne rien faire
+            if (!audioInitialized || !audioContext || !oscillator || !gainNode) return;
+
+            // Calculer la distance à la cible
+            const targetHeight = targetGlass.offsetHeight * (targetPercentage / 100);
+            const currentHeight = targetGlass.offsetHeight * (currentBeerPercentage / 100);
+            const distanceToTarget = Math.abs(currentHeight - targetHeight);
+            const maxDistance = targetGlass.offsetHeight * 0.5; // Distance maximale pour l'effet sonore
+
+            // Normaliser la distance (0 = très proche, 1 = très loin)
+            const normalizedDistance = Math.min(1, distanceToTarget / maxDistance);
+
+            // Inverser pour que 0 = loin (son grave), 1 = proche (son aigu)
+            const proximity = 1 - normalizedDistance;
+
+            // Ajuster la fréquence (220Hz à 880Hz)
+            const minFreq = 220;
+            const maxFreq = 880;
+            oscillator.frequency.value = minFreq + (maxFreq - minFreq) * proximity;
+
+            // Ajuster le volume en fonction de l'inclinaison
+            const minVolume = 0.1;
+            const maxVolume = 0.5;
+            gainNode.gain.value = minVolume + (maxVolume - minVolume) * (currentGamma / 90);
+
+            // Stocker le dernier pourcentage pour le suivi
+            lastBeerPercentage = currentBeerPercentage;
+        }
+
+        // Arrêter le son
+        function stopSound() {
+            if (gainNode) {
+                gainNode.gain.value = 0;
+            }
+        }
+
+        // Modifier le gestionnaire du bouton start pour initialiser l'audio
+        startBtn.addEventListener('click', () => {
+            tutorialScreen.style.display = 'none';
+            gameActive = true;
+            // Initialiser l'audio après le clic utilisateur
+            initAudio();
+        });
+
+        // Modifier la fonction initGame pour ne pas initialiser l'audio directement
+        function initGame() {
+            currentLevel = 1;
+            score = 0;
+            totalScore = 0;
+            updateDisplay();
+            updateProgressBar();
+            setupLevel();
+            tutorialScreen.style.display = 'flex';
+            gameOverScreen.style.display = 'none';
+            levelCompleteScreen.style.display = 'none';
+            levelFailScreen.style.display = 'none';
+
+            setInterval(() => {
+                if (gameActive && parseFloat(targetBeer.style.height) > 10) {
+                    createBeerBubbles(targetBeer);
+                }
+                if (gameActive && parseFloat(sourceBeer.style.height) > 10) {
+                    createBeerBubbles(sourceBeer);
+                }
+            }, 1000);
+        }
+
+        // Créer des bulles de bière
+        function createBeerBubbles(container) {
+            const bubbleCount = Math.floor(Math.random() * 3) + 2;
+
+            for (let i = 0; i < bubbleCount; i++) {
+                const bubble = document.createElement('div');
+                bubble.className = 'beer-bubble';
+
+                const leftPos = Math.random() * 90 + 5;
+                const size = Math.random() * 6 + 3;
+
+                bubble.style.width = `${size}px`;
+                bubble.style.height = `${size}px`;
+                bubble.style.left = `${leftPos}%`;
+                bubble.style.bottom = '0';
+                bubble.style.animationDuration = `${Math.random() * 2 + 1.5}s`;
+                bubble.style.animationDelay = `${Math.random() * 1.5}s`;
+
+                container.appendChild(bubble);
+
+                setTimeout(() => {
+                    bubble.remove();
+                }, 3500);
+            }
+        }
+
+        // Configuration du niveau
+        function setupLevel() {
+            gameOver = false;
+            targetPercentage = 30 + Math.floor(Math.random() * 50);
+            targetDisplay.textContent = targetPercentage + '%';
+            targetLimitDisplay.textContent = targetPercentage;
+            updateTargetPosition();
+            sourceBeer.style.height = '100%';
+            targetBeer.style.height = '0%';
+            sourceBottle.style.transform = 'translateX(-90%) rotate(0deg)';
+            gameActive = true;
+            lastBeerHeight = 0;
+            lastPourTime = 0;
+            stopSound();
+        }
+
+        // Mettre à jour la position de la cible
+        function updateTargetPosition() {
+            const glassHeight = targetGlass.offsetHeight;
+            const targetPosition = glassHeight * (targetPercentage / 100);
+            const toleranceHeight = glassHeight * (targetTolerance / 100);
+
+            targetLine.style.bottom = `${targetPosition}px`;
+            targetRange.style.bottom = `${targetPosition - toleranceHeight / 2}px`;
+            targetRange.style.height = `${toleranceHeight}px`;
+        }
+
+        // Mise à jour de l'affichage
+        function updateDisplay() {
+            levelDisplay.textContent = currentLevel;
+            scoreDisplay.textContent = score;
+        }
+
+        // Mettre à jour la barre de progression
+        function updateProgressBar() {
+            const progress = Math.min(100, (totalScore / WINNING_SCORE) * 100);
+            progressBar.style.width = `${progress}%`;
+            progressBar.textContent = `${totalScore}/${WINNING_SCORE}`;
+        }
+
+        // Gestion de l'inclinaison (modifié pour utiliser gamma)
+        function handleOrientation(event) {
+            if (!gameActive || gameOver) return;
+
+            // Utilisation de gamma pour la rotation horizontale (inclinaison gauche/droite)
+            currentGamma = event.gamma;
+            updateTiltIndicator(currentGamma);
+
+            // Seuil d'inclinaison vers la droite (gamma positif)
+            if (currentGamma > 10 && currentGamma < 90 && parseFloat(sourceBeer.style.height) > 0) {
+                if (!isPouring) {
+                    isPouring = true;
+                    lastPourTime = Date.now();
+                }
+
+                const bottleAngle = Math.min(60, currentGamma);
+                sourceBottle.style.transform = `translateX(-90%) rotate(${bottleAngle}deg)`;
+
+                // Calcul du taux de transfert en fonction de l'inclinaison et du temps
+                const now = Date.now();
+                const deltaTime = now - lastPourTime;
+                lastPourTime = now;
+
+                // Le taux de transfert augmente avec l'inclinaison et le temps
+                const inclinationFactor = Math.pow(currentGamma / 90, 2); // Carré pour une réponse non linéaire
+                const timeFactor = Math.min(1, deltaTime / 1000); // Facteur temps (max 1s)
+                const transferRate = POUR_RATE_BASE + (POUR_RATE_MULTIPLIER * inclinationFactor * timeFactor * currentGamma);
+
+                transferBeer(transferRate);
+            } else {
+                if (isPouring) {
+                    isPouring = false;
+                    stopSound();
+                }
+                sourceBottle.style.transform = 'translateX(-90%) rotate(0deg)';
+            }
+        }
+
+        // Mettre à jour l'indicateur de tilt (modifié pour le mouvement horizontal)
+        function updateTiltIndicator(gamma) {
+            const tiltX = Math.min(90, Math.max(0, gamma)) / 90 * 100;
+            tiltHandle.style.transform = `translate(calc(-50% + ${tiltX}px), -50%)`;
+        }
+
+        // Transférer la bière
+        function transferBeer(rate) {
+            if (gameOver) return;
+
+            const currentSourceHeight = parseFloat(sourceBeer.style.height);
+            let currentTargetHeight = parseFloat(targetBeer.style.height);
+
+            if (currentSourceHeight <= 0) {
+                isPouring = false;
+                stopSound();
+                return;
+            }
+
+            const adjustedRate = rate * (1 - (currentLevel * 0.00000001));
+            sourceBeer.style.height = `${Math.max(0, currentSourceHeight - adjustedRate)}%`;
+            currentTargetHeight = Math.min(100, currentTargetHeight + adjustedRate);
+
+            targetBeer.style.height = `${currentTargetHeight}%`;
+
+            // Mettre à jour le son en fonction du niveau de remplissage
+            updateSound(currentTargetHeight);
+
+            if (Math.random() < 0.3) {
+                createBeerBubbles(targetBeer);
+            }
+
+            const glassHeight = targetGlass.offsetHeight;
+            if ((currentTargetHeight / 100) * glassHeight >
+                (targetPercentage / 100) * glassHeight + (targetTolerance / 100) * glassHeight) {
+                gameOver = true;
+                isPouring = false;
+                stopSound();
+                showFailScreen(currentTargetHeight);
+            }
+        }
+
+        // Afficher l'écran d'échec
+        function showFailScreen(finalHeight) {
+            const glassHeight = targetGlass.offsetHeight;
+            const targetHeight = glassHeight * (targetPercentage / 100);
+            const beerHeight = glassHeight * (finalHeight / 100);
+            const distance = Math.abs(beerHeight - targetHeight);
+
+            const maxDistance = glassHeight * 0.3;
+            const precision = Math.max(0, 100 - (distance / maxDistance * 100));
+
+            const lostPoints = 100;
+            totalScore = Math.max(0, totalScore - lostPoints);
+            updateProgressBar();
+
+            actualFillDisplay.textContent = finalHeight.toFixed(0);
+            document.getElementById('failPrecision').textContent = precision.toFixed(0);
+            pointsLostDisplay.textContent = lostPoints;
+            levelFailScreen.style.display = 'flex';
+            gameActive = false;
+        }
+
+        // Calculer le score
+        function calculateScore(currentBeerHeight) {
+            const glassHeight = targetGlass.offsetHeight;
+            const targetHeight = glassHeight * (targetPercentage / 100);
+            const beerHeight = glassHeight * (currentBeerHeight / 100);
+            const distance = Math.abs(beerHeight - targetHeight);
+
+            const maxDistance = glassHeight * 0.3;
+            let fillPrecision = Math.max(0, 100 - (distance / maxDistance * 100));
+
+            fillPrecision = Math.min(100, fillPrecision * 1.5);
+            const levelScore = Math.floor(fillPrecision * currentLevel * 1.2);
+
+            score += levelScore;
+            totalScore += levelScore;
+            updateDisplay();
+            updateProgressBar();
+
+            finalScoreDisplay.textContent = levelScore;
+            precisionValue.textContent = fillPrecision.toFixed(0);
+            precisionFill.style.width = `${fillPrecision}%`;
+
+            if (totalScore >= WINNING_SCORE) {
+                showWinScreen();
+            }
+        }
+
+        // Afficher l'écran de victoire
+        function showWinScreen() {
+            gameActive = false;
+            stopSound();
+            finalTotalScore.textContent = totalScore;
+            totalLevelsDisplay.textContent = currentLevel;
+            gameOverScreen.style.display = 'flex';
+        }
+
+        validateBtn.addEventListener('click', () => {
+            if (!gameActive || gameOver) return;
+
+            isPouring = false;
+            stopSound();
+            const currentBeerHeight = parseFloat(targetBeer.style.height);
+            const glassHeight = targetGlass.offsetHeight;
+            const targetHeight = glassHeight * (targetPercentage / 100);
+            const beerHeight = glassHeight * (currentBeerHeight / 100);
+
+            if (beerHeight > targetHeight + (glassHeight * (targetTolerance / 100))) {
+                gameOver = true;
+                showFailScreen(currentBeerHeight);
+            } else {
+                calculateScore(currentBeerHeight);
+                levelCompleteScreen.style.display = 'flex';
+                gameActive = false;
+            }
+        });
+
+        // Recommencer le niveau
+        function restartLevel() {
+            setupLevel();
+            levelCompleteScreen.style.display = 'none';
+            levelFailScreen.style.display = 'none';
+        }
+
+        // Réinitialiser complètement le jeu
+        function resetGame() {
+            initGame();
+        }
+
+        // Fonction utilitaire pour mapper une valeur d'une plage à une autre
+        function mapRange(value, inMin, inMax, outMin, outMax) {
+            return (value - inMin) * (outMax - outMin) / (inMax - inMin) + outMin;
+        }
+
+        // Écouteurs d'événements
+        window.addEventListener('deviceorientation', handleOrientation);
+        restartBtn.addEventListener('click', restartLevel);
+        resetBtn.addEventListener('click', resetGame);
+        continueBtn.addEventListener('click', () => {
+            currentLevel++;
+            levelCompleteScreen.style.display = 'none';
+            setupLevel();
+        });
+        retryBtn.addEventListener('click', restartLevel);
+        startBtn.addEventListener('click', () => {
+            tutorialScreen.style.display = 'none';
+            gameActive = true;
+        });
+        newGameBtn.addEventListener('click', initGame);
+
+        // Redimensionnement de la fenêtre
+        window.addEventListener('resize', () => {
+            if (gameActive) {
+                updateTargetPosition();
+            }
+        });
+
+        // Démarrer le jeu
+        initGame();
+
+        // Fallback pour les appareils sans capteur d'orientation
+        if (!window.DeviceOrientationEvent) {
+            alert("Désolé, ce jeu nécessite un appareil avec capteur d'orientation. Veuillez utiliser un smartphone ou une tablette.");
+        }
+
+        // Contrôles alternatifs pour le développement sur ordinateur
+        let simulatedGamma = 0;
+        const maxSimulatedGamma = 60;
+
+        document.addEventListener('keydown', (e) => {
+            if (!gameActive || gameOver) return;
+
+            if (e.key === 'ArrowRight') {
+                simulatedGamma = Math.min(maxSimulatedGamma, simulatedGamma + 5);
+                handleOrientation({ gamma: simulatedGamma });
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            if (e.key === 'ArrowRight') {
+                simulatedGamma = 0;
+                handleOrientation({ gamma: 0 });
+            }
+        });
+
+        // Empêcher le changement d'orientation
+        function lockOrientation() {
+            if (screen.orientation && screen.orientation.lock) {
+                screen.orientation.lock('portrait').catch(function (error) {
+                    console.log('Orientation lock failed: ', error);
+                });
+            } else if (screen.lockOrientation) {
+                screen.lockOrientation('portrait');
+            } else if (screen.mozLockOrientation) {
+                screen.mozLockOrientation('portrait');
+            } else if (screen.msLockOrientation) {
+                screen.msLockOrientation('portrait');
+            }
+        }
+
+        // Vérifier l'orientation au chargement
+        function checkOrientation() {
+            if (window.innerHeight < window.innerWidth) {
+                // En mode paysage, afficher le message
+                document.querySelector('.landscape-warning').style.display = 'flex';
+            } else {
+                // En mode portrait, masquer le message
+                document.querySelector('.landscape-warning').style.display = 'none';
+            }
+        }
+
+        // Vérifier l'orientation lors du changement
+        window.addEventListener('resize', checkOrientation);
+        window.addEventListener('orientationchange', checkOrientation);
+
+        // Initialiser le verrouillage d'orientation
+        window.addEventListener('load', function () {
+            checkOrientation();
+            lockOrientation();
+        });
+    </script>
+</body>
+
+</html>
