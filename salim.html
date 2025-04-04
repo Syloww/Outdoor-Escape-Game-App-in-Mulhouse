@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 
-<head> 
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Tir à la Fléchette Pro</title>
@@ -50,7 +50,8 @@
             position: absolute;
             width: 4px;
             height: 40px;
-            background-color: #8B4513; /* Marron */
+            background-color: #8B4513;
+            /* Marron */
             bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
@@ -71,25 +72,25 @@
             z-index: 5;
         }
 
+        .panel{
+            position: fixed;
+            width: 100%;
+            padding: 20px;
+            display: flex;
+            background-color: rgba(0, 0, 0, 0.395);
+        }
+        
         #scorePanel {
-            position: absolute;
-            top: 20px;
-            left: 20px;
             color: white;
             font-size: 18px;
-            background-color: rgba(0, 0, 0, 0.7);
             padding: 10px;
             border-radius: 5px;
             z-index: 20;
         }
 
         #levelPanel {
-            position: absolute;
-            top: 20px;
-            right: 20px;
             color: white;
             font-size: 18px;
-            background-color: rgba(0, 0, 0, 0.7);
             padding: 10px;
             border-radius: 5px;
             z-index: 20;
@@ -178,14 +179,17 @@
         <div id="target"></div>
         <div id="crosshair"></div>
         <div id="dart"></div>
-        <div id="scorePanel">
-            Score: <span id="scoreDisplay">0</span><br>
-            Dernier tir: <span id="lastShot">-</span>
-        </div>
-        <div id="levelPanel">
-            Niveau: <span id="levelDisplay">1</span><br>
-            Prochain niveau: <span id="nextLevel">100</span>
-        </div>
+        <section class="panel">
+            <div id="scorePanel">
+                Score: <span id="scoreDisplay">0</span><br>
+                Dernier tir: <span id="lastShot">-</span>
+            </div>
+            <div id="levelPanel">
+                Niveau: <span id="levelDisplay">1</span><br>
+                Prochain niveau: <span id="nextLevel">100</span>
+            </div>
+        </section>
+
         <div id="instructions">Cliquez pour activer le son<br>Bougez votre téléphone pour viser<br>Tapez pour tirer
         </div>
         <div id="progressContainer">
