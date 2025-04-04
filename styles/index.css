@@ -28,9 +28,11 @@ body {
     z-index: 4;
     font-family: "Jersey 10", sans-serif;
     font-style: normal;
+    letter-spacing: 2px;
 }
 .titre h1{
     margin-bottom: 40px;
+    letter-spacing: 4px;
 }
 
 .preloader {
