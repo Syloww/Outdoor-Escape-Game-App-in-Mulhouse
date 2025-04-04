@@ -13,9 +13,14 @@ body {
     background-repeat: no-repeat;
     overflow-x: hidden;
 }
+.titre{
+  display:flex;
+    flex-direction : column;
+    aligns-item:center;
+}
+
 h1{
   color : #FFF;
-  text-align : center;
   font-family: "Jersey 10", sans-serif;
   font-weight: 400;
   font-style: normal;
