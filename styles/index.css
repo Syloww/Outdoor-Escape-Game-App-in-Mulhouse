@@ -123,7 +123,7 @@ h1 {
 /* Styles pour les bâtiments et l'église */
 .church-container {
     position: fixed;
-    bottom: 4%;
+    bottom: 20%;
     left: 0;
     width: 100%;
     display: flex;
