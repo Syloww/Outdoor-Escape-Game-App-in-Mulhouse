@@ -1,14 +1,14 @@
 # Outdoor-Escape-Game-App-in-Mulhouse
 Introduction Background of the Project Total immersion in Mulhouse, without the need for augmented reality.
 Platform
-iOS & Android.
+- iOS & Android.
 Game Concept
 Three mini-games:
-Frequency Game – Find an invisible ball using audio cues.
-Bar tilt Challenge – Tilt phone to fill glasses accurately.
-Steal the olive ! – steal the olive without waking the guards!
+- Frequency Game – Find an invisible ball using audio cues.
+- Bar tilt Challenge – Tilt phone to fill glasses accurately.
+- Steal the olive ! – steal the olive without waking the guards!
 Storyline
-Players complete challenges to "escape" or unlock new areas.
+- Players complete challenges to "escape" or unlock new areas.
 Gameplay Mechanics
 Frequency Game: Audio feedback guides players.
 Pouring Game: Gyroscope controls liquid flow.
