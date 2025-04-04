@@ -4,8 +4,152 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Balloon Pop Expert</title>
-    <link rel="stylesheet" href="sakina.css">
-
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background: #000;
+            color: white;
+            overflow: hidden;
+            touch-action: manipulation;
+            transition: background 0.2s ease;
+        }
+        
+        #game-container {
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        #game-area {
+            position: relative;
+            width: 100%;
+            height: 60vh;
+            min-height: 300px;
+            overflow: hidden;
+            margin: 20px 0;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+        }
+        
+        .balloon {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        #frequency-container {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100px;
+            overflow: hidden;
+            z-index: 2;
+        }
+        
+        #frequency-wave {
+            width: 100%;
+            height: 100%;
+        }
+        
+        #wave-path {
+            fill: none;
+            stroke-width: 3;
+            stroke-linecap: round;
+        }
+        
+        #audio-indicator {
+            width: 100%;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            margin: 10px 0;
+            overflow: hidden;
+            position: relative;
+            z-index: 3;
+        }
+        
+        #audio-level {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #4CAF50, #8BC34A);
+            transition: width 0.1s;
+        }
+        
+        #trap-warning {
+            color: #FF5252;
+            font-weight: bold;
+            margin: 10px 0;
+            display: none;
+            text-shadow: 0 0 5px rgba(255, 0, 0, 0.7);
+            animation: warning-pulse 0.5s infinite;
+            position: relative;
+            z-index: 3;
+        }
+        
+        #score-display {
+            font-size: 20px;
+            margin: 10px 0;
+            position: relative;
+            z-index: 3;
+        }
+        
+        #timer {
+            font-size: 20px;
+            color: #FFD700;
+            margin: 10px 0;
+            position: relative;
+            z-index: 3;
+        }
+        
+        #particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        .particle {
+            position: absolute;
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            opacity: 0.7;
+        }
+        
+        @keyframes warning-pulse {
+            0% { opacity: 0.7; }
+            50% { opacity: 1; }
+            100% { opacity: 0.7; }
+        }
+        
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+    </style>
 </head>
 <body>
     <div id="particles"></div>
@@ -29,4 +173,523 @@
             </div>
         </div>
     </div>
-    <script src="sakina.js"></script>
+
+    <script>
+        // Configuration
+        const BALLOON_COUNT = 15;
+        const REAL_BALLOONS_RATIO = 0.7;
+        const TRAP_BALLOONS_RATIO = 0.2;
+        const BONUS_BALLOONS_RATIO = 0.1;
+        const ACTIVATION_DISTANCE = 80;
+        const GAME_DURATION = 60;
+        const BONUS_POINTS = 50;
+        const BALLOON_POINTS = 10;
+        
+        // État du jeu
+        let balloons = [];
+        let score = 0;
+        let gameActive = false;
+        let timeLeft = GAME_DURATION;
+        let timer;
+        let audioContext, oscillator, gainNode;
+        let currentFrequency = 0;
+        let lastX = 0, lastY = 0;
+        let closestBalloon = null;
+        let wavePoints = [];
+        let particles = [];
+        
+        // Initialisation
+        function initGame() {
+            createBalloons();
+            setupAudio();
+            setupWave();
+            startGame();
+        }
+        
+        function startGame() {
+            score = 0;
+            timeLeft = GAME_DURATION;
+            gameActive = true;
+            
+            updateScore();
+            updateTimer();
+            timer = setInterval(updateGame, 1000);
+            
+            // Démarrer la détection de mouvement
+            const gameArea = document.getElementById('game-area');
+            gameArea.addEventListener('touchmove', handleTouchMove, { passive: false });
+            gameArea.addEventListener('touchend', handleTouchEnd);
+            
+            // Animation de la vague
+            requestAnimationFrame(animateWave);
+        }
+        
+        function updateGame() {
+            if (!gameActive) return;
+            
+            timeLeft--;
+            updateTimer();
+            
+            if (timeLeft <= 0) {
+                endGame();
+            }
+        }
+        
+        function createBalloons() {
+            const gameArea = document.getElementById('game-area');
+            const rect = gameArea.getBoundingClientRect();
+            
+            // Calculer le nombre de chaque type
+            const realCount = Math.floor(BALLOON_COUNT * REAL_BALLOONS_RATIO);
+            const trapCount = Math.floor(BALLOON_COUNT * TRAP_BALLOONS_RATIO);
+            const bonusCount = BALLOON_COUNT - realCount - trapCount;
+            
+            // Créer les ballons
+            for (let i = 0; i < BALLOON_COUNT; i++) {
+                const balloon = document.createElement('div');
+                balloon.className = 'balloon';
+                
+                // Position aléatoire
+                const x = Math.random() * (rect.width - 60);
+                const y = Math.random() * (rect.height - 60);
+                balloon.style.left = `${x}px`;
+                balloon.style.top = `${y}px`;
+                
+                // Déterminer le type
+                let type, frequency;
+                if (i < realCount) {
+                    type = 'real';
+                    frequency = 800 + Math.random() * 400; // 800-1200 Hz
+                } else if (i < realCount + trapCount) {
+                    type = 'trap';
+                    frequency = 150 + Math.random() * 150; // 150-300 Hz
+                } else {
+                    type = 'bonus';
+                    frequency = 1200 + Math.random() * 800; // 1200-2000 Hz
+                }
+                
+                gameArea.appendChild(balloon);
+                
+                balloons.push({
+                    element: balloon,
+                    x: x + 30,
+                    y: y + 30,
+                    type: type,
+                    frequency: frequency,
+                    popped: false
+                });
+            }
+        }
+        
+        function setupAudio() {
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                oscillator = audioContext.createOscillator();
+                gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.type = 'sine';
+                gainNode.gain.value = 0;
+                oscillator.start();
+            } catch (e) {
+                console.error("Erreur audio:", e);
+            }
+        }
+        
+        function setupWave() {
+            // Initialiser les points de la vague
+            wavePoints = [];
+            for (let i = 0; i <= 50; i++) {
+                wavePoints.push({ x: i * 10, y: 50 });
+            }
+            updateWave();
+        }
+        
+        function animateWave() {
+            if (!gameActive) return;
+            
+            // Animer la vague même sans interaction
+            if (currentFrequency === 0) {
+                const baseY = 50;
+                for (let i = 0; i < wavePoints.length; i++) {
+                    wavePoints[i].y = baseY + Math.sin(Date.now() / 1000 + i * 0.3) * 5;
+                }
+            }
+            
+            updateWave();
+            requestAnimationFrame(animateWave);
+        }
+        
+        function updateWave() {
+            const path = document.getElementById('wave-path');
+            let d = `M${wavePoints[0].x},${wavePoints[0].y}`;
+            
+            for (let i = 1; i < wavePoints.length; i++) {
+                const cp1x = (wavePoints[i-1].x + wavePoints[i].x) / 2;
+                const cp1y = wavePoints[i-1].y;
+                const cp2x = cp1x;
+                const cp2y = wavePoints[i].y;
+                
+                d += ` C${cp1x},${cp1y} ${cp2x},${cp2y} ${wavePoints[i].x},${wavePoints[i].y}`;
+            }
+            
+            path.setAttribute('d', d);
+            
+            // Changer la couleur en fonction de la fréquence
+            let hue = 120 - (currentFrequency / 20);
+            if (currentFrequency < 300) hue = 0; // Rouge pour les basses fréquences
+            path.setAttribute('stroke', `hsl(${hue}, 100%, 70%)`);
+            
+            // Ajouter un effet de glow
+            path.style.filter = `drop-shadow(0 0 5px hsl(${hue}, 100%, 50%))`;
+        }
+        
+        function handleTouchMove(e) {
+            if (!gameActive) return;
+            e.preventDefault();
+            
+            const touch = e.touches[0];
+            const gameArea = document.getElementById('game-area');
+            const rect = gameArea.getBoundingClientRect();
+            
+            lastX = touch.clientX - rect.left;
+            lastY = touch.clientY - rect.top;
+            
+            updateAudioFeedback(lastX, lastY);
+            createParticles(lastX, lastY);
+        }
+        
+        function handleTouchEnd() {
+            if (!gameActive) return;
+            
+            // Vérifier si on est assez proche d'un ballon
+            if (closestBalloon) {
+                const dx = closestBalloon.x - lastX;
+                const dy = closestBalloon.y - lastY;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < ACTIVATION_DISTANCE) {
+                    if (closestBalloon.type === 'trap') {
+                        triggerTrap(closestBalloon);
+                    } else {
+                        popBalloon(closestBalloon);
+                    }
+                }
+            }
+        }
+        
+        function createParticles(x, y) {
+            // Créer des particules visuelles
+            for (let i = 0; i < 3; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                
+                // Position aléatoire autour du point de contact
+                const angle = Math.random() * Math.PI * 2;
+                const distance = Math.random() * 20;
+                const px = x + Math.cos(angle) * distance;
+                const py = y + Math.sin(angle) * distance;
+                
+                particle.style.left = `${px}px`;
+                particle.style.top = `${py}px`;
+                
+                // Couleur en fonction de la fréquence
+                let hue = 120 - (currentFrequency / 20);
+                if (currentFrequency < 300) hue = 0;
+                particle.style.backgroundColor = `hsl(${hue}, 100%, 70%)`;
+                
+                // Animation
+                particle.style.animation = `float ${1 + Math.random() * 2}s infinite`;
+                
+                document.getElementById('particles').appendChild(particle);
+                
+                // Supprimer après un certain temps
+                setTimeout(() => {
+                    particle.remove();
+                }, 2000);
+            }
+        }
+        
+        function updateAudioFeedback(x, y) {
+            if (!gameActive) return;
+            
+            // Trouver le ballon le plus proche
+            closestBalloon = null;
+            let minDistance = Infinity;
+            
+            balloons.forEach(balloon => {
+                if (!balloon.popped) {
+                    const dx = balloon.x - x;
+                    const dy = balloon.y - y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        closestBalloon = balloon;
+                    }
+                }
+            });
+            
+            if (closestBalloon && minDistance < ACTIVATION_DISTANCE) {
+                const volume = 1 - (minDistance / ACTIVATION_DISTANCE);
+                
+                // Jouer le son correspondant
+                currentFrequency = closestBalloon.frequency;
+                oscillator.frequency.setValueAtTime(currentFrequency, audioContext.currentTime);
+                gainNode.gain.setValueAtTime(volume * 0.5, audioContext.currentTime);
+                
+                // Mettre à jour l'indicateur
+                document.getElementById('audio-level').style.width = `${volume * 100}%`;
+                
+                // Mettre à jour la vague
+                updateWaveWithFrequency(currentFrequency, volume);
+                
+                // Avertissement pour les pièges
+                if (closestBalloon.type === 'trap') {
+                    document.getElementById('trap-warning').style.display = 'block';
+                } else {
+                    document.getElementById('trap-warning').style.display = 'none';
+                }
+                
+                // Changer la couleur de fond
+                updateBackground(currentFrequency, volume);
+            } else {
+                gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+                document.getElementById('audio-level').style.width = '0%';
+                document.getElementById('trap-warning').style.display = 'none';
+                currentFrequency = 0;
+                updateWaveWithFrequency(0, 0);
+                updateBackground(0, 0);
+            }
+        }
+        
+        function updateWaveWithFrequency(frequency, volume) {
+            const amplitude = 30 * volume;
+            const frequencyFactor = frequency / 1000;
+            
+            for (let i = 0; i < wavePoints.length; i++) {
+                const x = wavePoints[i].x;
+                wavePoints[i].y = 50 + Math.sin(x / 50 + Date.now() / 500 * frequencyFactor) * amplitude;
+            }
+            
+            updateWave();
+        }
+        
+        function updateBackground(frequency, volume) {
+            let hue, saturation, lightness;
+            
+            if (frequency === 0) {
+                // Pas de fréquence - fond noir
+                document.body.style.backgroundColor = '#000';
+                return;
+            } else if (frequency < 300) {
+                // Piège - rouge
+                hue = 0;
+                saturation = 100;
+                lightness = 10 + volume * 20;
+            } else if (frequency < 800) {
+                // Ballon normal - vert à jaune
+                hue = 60 + (frequency - 300) / 5;
+                saturation = 100;
+                lightness = 10 + volume * 15;
+            } else {
+                // Bonus - jaune à blanc
+                hue = 60;
+                saturation = 100 - (frequency - 800) / 12;
+                lightness = 20 + volume * 20 + (frequency - 800) / 20;
+            }
+            
+            document.body.style.backgroundColor = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+            
+            // Ajouter un effet de particules dans le fond
+            if (volume > 0.5 && Math.random() > 0.7) {
+                createBackgroundParticle(hue);
+            }
+        }
+        
+        function createBackgroundParticle(hue) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            
+            // Position aléatoire
+            particle.style.left = `${Math.random() * 100}%`;
+            particle.style.top = `${Math.random() * 100}%`;
+            
+            // Taille et couleur
+            const size = 2 + Math.random() * 8;
+            particle.style.width = `${size}px`;
+            particle.style.height = `${size}px`;
+            particle.style.backgroundColor = `hsl(${hue}, 100%, 70%)`;
+            
+            // Animation
+            particle.style.animation = `float ${2 + Math.random() * 3}s infinite`;
+            
+            document.getElementById('particles').appendChild(particle);
+            
+            // Supprimer après un certain temps
+            setTimeout(() => {
+                particle.remove();
+            }, 3000);
+        }
+        
+        function popBalloon(balloon) {
+            if (balloon.popped) return;
+            balloon.popped = true;
+            
+            // Points
+            const points = balloon.type === 'bonus' ? BONUS_POINTS : BALLOON_POINTS;
+            score += points;
+            
+            // Son
+            playSound(true, balloon.type === 'bonus');
+            
+            // Effet visuel
+            createExplosion(balloon.x, balloon.y, balloon.type === 'bonus' ? 1200 : 800);
+            
+            // Supprimer le ballon
+            balloon.element.remove();
+            
+            updateScore();
+            
+            // Vérifier la fin du jeu
+            checkGameEnd();
+        }
+        
+        function createExplosion(x, y, baseHue) {
+            // Créer une explosion de particules
+            for (let i = 0; i < 15; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                
+                // Position
+                particle.style.left = `${x}px`;
+                particle.style.top = `${y}px`;
+                
+                // Taille
+                const size = 3 + Math.random() * 7;
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                
+                // Couleur
+                const hue = baseHue + Math.random() * 60 - 30;
+                particle.style.backgroundColor = `hsl(${hue}, 100%, 70%)`;
+                
+                // Animation
+                const angle = Math.random() * Math.PI * 2;
+                const distance = 20 + Math.random() * 50;
+                const duration = 0.5 + Math.random() * 1.5;
+                
+                particle.style.transition = `all ${duration}s linear`;
+                particle.style.transform = `translate(${Math.cos(angle) * distance}px, ${Math.sin(angle) * distance}px)`;
+                particle.style.opacity = '0';
+                
+                document.getElementById('particles').appendChild(particle);
+                
+                // Supprimer après l'animation
+                setTimeout(() => {
+                    particle.remove();
+                }, duration * 1000);
+            }
+        }
+        
+        function triggerTrap(balloon) {
+            if (balloon.popped) return;
+            balloon.popped = true;
+            
+            // Son
+            playSound(false);
+            
+            // Effet visuel
+            createExplosion(balloon.x, balloon.y, 0);
+            
+            // Supprimer le ballon
+            balloon.element.remove();
+            
+            // Game Over
+            endGame();
+        }
+        
+        function playSound(isPositive, isBonus = false) {
+            if (!audioContext) return;
+            
+            const ctx = audioContext;
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            
+            if (isPositive) {
+                if (isBonus) {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(1200, ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(2000, ctx.currentTime + 0.2);
+                } else {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(800, ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(400, ctx.currentTime + 0.3);
+                }
+                gain.gain.setValueAtTime(0.3, ctx.currentTime);
+            } else {
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(150, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(50, ctx.currentTime + 1);
+                gain.gain.setValueAtTime(0.8, ctx.currentTime);
+            }
+            
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+            osc.start();
+            osc.stop(ctx.currentTime + (isPositive ? 0.5 : 1));
+        }
+        
+        function checkGameEnd() {
+            const realBalloonsLeft = balloons.filter(b => !b.popped && b.type === 'real').length;
+            if (realBalloonsLeft === 0) {
+                endGame();
+            }
+        }
+        
+        function updateScore() {
+            document.getElementById('score-display').textContent = `Score: ${score}`;
+        }
+        
+        function updateTimer() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            document.getElementById('timer').textContent = 
+                `Temps: ${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+            
+            if (timeLeft <= 10) {
+                document.getElementById('timer').style.color = '#FF5252';
+            }
+        }
+        
+        function endGame() {
+            gameActive = false;
+            clearInterval(timer);
+            
+            if (oscillator) {
+                gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+            }
+            
+            alert(`Partie terminée ! Votre score: ${score}`);
+            setTimeout(restartGame, 1000);
+        }
+        
+        function restartGame() {
+            // Nettoyer
+            document.getElementById('particles').innerHTML = '';
+            balloons.forEach(b => b.element.remove());
+            balloons = [];
+            
+            // Réinitialiser
+            initGame();
+        }
+        
+        // Démarrer le jeu
+        window.onload = initGame;
+    </script>
+</body>
+</html>
