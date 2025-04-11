@@ -6,15 +6,75 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
     <link rel="stylesheet" href="styles/dialogue.css">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- Leaflet Routing Machine CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+    <style>
+        #map-container {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        #map {
+            width: 90%;
+            height: 80%;
+            border: 3px solid white;
+        }
+        #close-map {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .dialogue-link {
+            color: inherit;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+    </style>
 </head>
 
 <body>
+    <div id="map-container">
+        <button id="close-map">Fermer la carte</button>
+        <div id="map"></div>
+    </div>
+
     <div class="pigeon-container">
         <img src="images/pigeon.png" alt="pigeon" class="pigeon">
     </div>
     <div class="dialogue-box">
         <span id="dialogue-text"></span>
     </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Leaflet Routing Machine JS -->
+    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+    <!-- Custom red icon for marker -->
+    <script>
+        // Création d'une icône rouge personnalisée
+        const redIcon = new L.Icon({
+            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowSize: [41, 41]
+        });
+    </script>
 
     <script>
         const phrases = [
@@ -36,27 +96,192 @@
         let phraseIndex = 0;
         let charIndex = 0;
         let isTyping = false;
+        let typingTimeout;
+        let isMapOpen = false;
+        let map, routingControl;
+
+        // Coordonnées exactes de la mirror door
+        const mirrorDoorCoords = [47.748381528597086, 7.333458419631289];
+        
+        function initMap() {
+            // Créer la carte centrée sur la destination
+            map = L.map('map').setView(mirrorDoorCoords, 17);
+            
+            // Ajouter la couche de tuiles OpenStreetMap
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+            
+            // Marqueur ROUGE pour la destination (mirror door)
+            L.marker(mirrorDoorCoords, {icon: redIcon}).addTo(map)
+                .bindPopup("<b>Mirror Door</b><br>Destination")
+                .openPopup();
+            
+            // Obtenir la position de l'utilisateur et calculer l'itinéraire
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    const userCoords = [position.coords.latitude, position.coords.longitude];
+                    
+                    // Ajouter un marqueur bleu pour la position de l'utilisateur
+                    L.marker(userCoords).addTo(map)
+                        .bindPopup("<b>Votre position</b>")
+                        .openPopup();
+                    
+                    // Configurer le contrôle d'itinéraire avec une ligne ROUGE
+                    routingControl = L.Routing.control({
+                        waypoints: [
+                            L.latLng(userCoords[0], userCoords[1]),
+                            L.latLng(mirrorDoorCoords[0], mirrorDoorCoords[1])
+                        ],
+                        routeWhileDragging: false,
+                        showAlternatives: false,
+                        fitSelectedRoutes: true,
+                        show: true,
+                        collapsible: true,
+                        addWaypoints: false,
+                        draggableWaypoints: false,
+                        language: 'fr',
+                        lineOptions: {
+                            styles: [{color: 'red', opacity: 0.9, weight: 6}]
+                        },
+                        createMarker: function(i, wp, nWps) {
+                            if (i === 0) {
+                                return L.marker(wp.latLng, {
+                                    title: "Votre position"
+                                });
+                            }
+                            return L.marker(wp.latLng, {
+                                icon: redIcon,
+                                title: "Mirror Door"
+                            });
+                        }
+                    }).addTo(map);
+                    
+                    // Centrer la carte sur les deux points avec un padding
+                    const bounds = L.latLngBounds([userCoords, mirrorDoorCoords]);
+                    map.fitBounds(bounds, {padding: [50, 50]});
+                    
+                }, function(error) {
+                    alert("Impossible d'obtenir votre position. Vous serez centré sur la Mirror Door.");
+                    map.setView(mirrorDoorCoords, 17);
+                    
+                    // Afficher quand même l'itinéraire depuis le centre-ville par défaut
+                    const defaultStart = [47.7465, 7.3390]; // Position par défaut au centre de Mulhouse
+                    routingControl = L.Routing.control({
+                        waypoints: [
+                            L.latLng(defaultStart[0], defaultStart[1]),
+                            L.latLng(mirrorDoorCoords[0], mirrorDoorCoords[1])
+                        ],
+                        lineOptions: {
+                            styles: [{color: 'red', opacity: 0.9, weight: 6}]
+                        },
+                        createMarker: function(i, wp, nWps) {
+                            if (i === 0) {
+                                return L.marker(wp.latLng, {
+                                    title: "Point de départ"
+                                });
+                            }
+                            return L.marker(wp.latLng, {
+                                icon: redIcon,
+                                title: "Mirror Door"
+                            });
+                        }
+                    }).addTo(map);
+                });
+            } else {
+                alert("La géolocalisation n'est pas supportée par votre navigateur. Vous serez centré sur la Mirror Door.");
+                map.setView(mirrorDoorCoords, 17);
+            }
+        }
+        
+        function showMap() {
+            isMapOpen = true;
+            document.getElementById('map-container').style.display = 'flex';
+            if (!map) {
+                initMap();
+            }
+            clearTimeout(typingTimeout);
+        }
+        
+        function hideMap() {
+            isMapOpen = false;
+            document.getElementById('map-container').style.display = 'none';
+            if (phraseIndex < phrases.length && charIndex < phrases[phraseIndex].length) {
+                typeWriter();
+            }
+        }
         
         function typeWriter() {
+            if (isMapOpen) return;
+
             isTyping = true;
             if (phraseIndex < phrases.length) {
                 if (charIndex < phrases[phraseIndex].length) {
-                    dialogueElement.innerHTML += phrases[phraseIndex].charAt(charIndex);
-                    charIndex++;
-                    setTimeout(typeWriter, 50);
+                    if (phraseIndex === 0) {
+                        const baseText = "Before I tell you my story, come and see me at the ";
+                        const linkText = "mirror door";
+                        
+                        if (charIndex < baseText.length) {
+                            dialogueElement.innerHTML = baseText.substring(0, charIndex + 1);
+                            charIndex++;
+                        } else {
+                            const linkPos = charIndex - baseText.length;
+                            if (linkPos < linkText.length) {
+                                if (linkPos === 0) {
+                                    dialogueElement.innerHTML = baseText + 
+                                        '<span class="dialogue-link" id="mirror-door-link">' + 
+                                        linkText.substring(0, linkPos + 1) + '</span>';
+                                } else {
+                                    const link = document.getElementById('mirror-door-link');
+                                    if (link) {
+                                        link.textContent = linkText.substring(0, linkPos + 1);
+                                    }
+                                }
+                                charIndex++;
+                            }
+                        }
+                    } else {
+                        dialogueElement.innerHTML = phrases[phraseIndex].substring(0, charIndex + 1);
+                        charIndex++;
+                    }
+                    
+                    typingTimeout = setTimeout(typeWriter, 50);
                 } else {
                     isTyping = false;
-                    // On attend le clic pour passer à la phrase suivante
+                    if (phraseIndex === 0) {
+                        const link = document.getElementById('mirror-door-link');
+                        if (link) {
+                            link.addEventListener('click', function(e) {
+                                e.preventDefault();
+                                showMap();
+                            });
+                        }
+                    }
                 }
             }
         }
         
         function nextPhrase() {
+            if (isMapOpen) return;
+
             if (isTyping) {
-                // Si on est en train d'écrire, on termine immédiatement la phrase courante
-                dialogueElement.innerHTML = phrases[phraseIndex];
+                if (phraseIndex === 0) {
+                    dialogueElement.innerHTML = "Before I tell you my story, come and see me at the " +
+                        '<span class="dialogue-link" id="mirror-door-link">mirror door</span>';
+                    
+                    const link = document.getElementById('mirror-door-link');
+                    if (link) {
+                        link.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            showMap();
+                        });
+                    }
+                } else {
+                    dialogueElement.innerHTML = phrases[phraseIndex];
+                }
                 charIndex = phrases[phraseIndex].length;
                 isTyping = false;
+                clearTimeout(typingTimeout);
                 return;
             }
             
@@ -68,12 +293,11 @@
             }
         }
         
-        // Démarrer l'animation après le chargement de la page
         window.onload = function() {
             setTimeout(typeWriter, 500);
+            document.getElementById('close-map').addEventListener('click', hideMap);
         };
         
-        // Gestion du clic sur l'écran
         document.addEventListener('click', nextPhrase);
     </script>
 </body>
