@@ -22,10 +22,11 @@
             z-index: 1000;
             justify-content: center;
             align-items: center;
+            flex-direction: column;
         }
         #map {
             width: 90%;
-            height: 80%;
+            height: 70%;
             border: 3px solid white;
         }
         #close-map {
@@ -38,10 +39,28 @@
             cursor: pointer;
             font-weight: bold;
         }
+        #instructions {
+            width: 90%;
+            height: 20%;
+            background: white;
+            margin-top: 10px;
+            padding: 10px;
+            overflow-y: auto;
+            border: 2px solid #ccc;
+        }
         .dialogue-link {
             color: inherit;
             text-decoration: underline;
             cursor: pointer;
+        }
+        .instruction-step {
+            margin-bottom: 5px;
+            padding: 5px;
+            border-bottom: 1px solid #eee;
+        }
+        .current-step {
+            font-weight: bold;
+            background-color: #f0f0f0;
         }
     </style>
 </head>
@@ -50,6 +69,7 @@
     <div id="map-container">
         <button id="close-map">Fermer la carte</button>
         <div id="map"></div>
+        <div id="instructions"></div>
     </div>
 
     <div class="pigeon-container">
@@ -98,7 +118,8 @@
         let isTyping = false;
         let typingTimeout;
         let isMapOpen = false;
-        let map, routingControl;
+        let map, routingControl, userMarker, watchId;
+        let currentRouteInstructions = [];
 
         // Coordonnées exactes de la mirror door
         const mirrorDoorCoords = [47.748381528597086, 7.333458419631289];
@@ -117,81 +138,155 @@
                 .bindPopup("<b>Mirror Door</b><br>Destination")
                 .openPopup();
             
-            // Obtenir la position de l'utilisateur et calculer l'itinéraire
+            // Démarrer le suivi GPS
+            startGPSTracking();
+        }
+        
+        function startGPSTracking() {
             if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(function(position) {
-                    const userCoords = [position.coords.latitude, position.coords.longitude];
-                    
-                    // Ajouter un marqueur bleu pour la position de l'utilisateur
-                    L.marker(userCoords).addTo(map)
-                        .bindPopup("<b>Votre position</b>")
-                        .openPopup();
-                    
-                    // Configurer le contrôle d'itinéraire avec une ligne ROUGE
-                    routingControl = L.Routing.control({
-                        waypoints: [
-                            L.latLng(userCoords[0], userCoords[1]),
-                            L.latLng(mirrorDoorCoords[0], mirrorDoorCoords[1])
-                        ],
-                        routeWhileDragging: false,
-                        showAlternatives: false,
-                        fitSelectedRoutes: true,
-                        show: true,
-                        collapsible: true,
-                        addWaypoints: false,
-                        draggableWaypoints: false,
-                        language: 'fr',
-                        lineOptions: {
-                            styles: [{color: 'red', opacity: 0.9, weight: 6}]
-                        },
-                        createMarker: function(i, wp, nWps) {
-                            if (i === 0) {
-                                return L.marker(wp.latLng, {
-                                    title: "Votre position"
-                                });
-                            }
-                            return L.marker(wp.latLng, {
-                                icon: redIcon,
-                                title: "Mirror Door"
-                            });
-                        }
-                    }).addTo(map);
-                    
-                    // Centrer la carte sur les deux points avec un padding
-                    const bounds = L.latLngBounds([userCoords, mirrorDoorCoords]);
-                    map.fitBounds(bounds, {padding: [50, 50]});
-                    
-                }, function(error) {
-                    alert("Impossible d'obtenir votre position. Vous serez centré sur la Mirror Door.");
-                    map.setView(mirrorDoorCoords, 17);
-                    
-                    // Afficher quand même l'itinéraire depuis le centre-ville par défaut
-                    const defaultStart = [47.7465, 7.3390]; // Position par défaut au centre de Mulhouse
-                    routingControl = L.Routing.control({
-                        waypoints: [
-                            L.latLng(defaultStart[0], defaultStart[1]),
-                            L.latLng(mirrorDoorCoords[0], mirrorDoorCoords[1])
-                        ],
-                        lineOptions: {
-                            styles: [{color: 'red', opacity: 0.9, weight: 6}]
-                        },
-                        createMarker: function(i, wp, nWps) {
-                            if (i === 0) {
-                                return L.marker(wp.latLng, {
-                                    title: "Point de départ"
-                                });
-                            }
-                            return L.marker(wp.latLng, {
-                                icon: redIcon,
-                                title: "Mirror Door"
-                            });
-                        }
-                    }).addTo(map);
-                });
+                // Options pour une haute précision
+                const options = {
+                    enableHighAccuracy: true,
+                    timeout: 5000,
+                    maximumAge: 0
+                };
+                
+                // Démarrer le watchPosition pour un suivi continu
+                watchId = navigator.geolocation.watchPosition(
+                    position => updatePosition(position),
+                    error => handleGeolocationError(error),
+                    options
+                );
             } else {
-                alert("La géolocalisation n'est pas supportée par votre navigateur. Vous serez centré sur la Mirror Door.");
-                map.setView(mirrorDoorCoords, 17);
+                alert("La géolocalisation n'est pas supportée par votre navigateur.");
+                map.setView(mirrorDoorCoords, 8);
             }
+        }
+        
+        function updatePosition(position) {
+            const userCoords = [position.coords.latitude, position.coords.longitude];
+            const accuracy = position.coords.accuracy;
+            
+            // Créer ou mettre à jour le marqueur de position
+            if (!userMarker) {
+                userMarker = L.marker(userCoords).addTo(map)
+                    .bindPopup("<b>Votre position</b>")
+                    .openPopup();
+                
+                // Ajouter un cercle de précision
+                L.circle(userCoords, {
+                    color: 'blue',
+                    fillColor: '#30f',
+                    fillOpacity: 0.2,
+                    radius: accuracy
+                }).addTo(map);
+                
+                // Calculer l'itinéraire initial
+                calculateRoute(userCoords);
+            } else {
+                userMarker.setLatLng(userCoords);
+            }
+            
+            // Recentrer légèrement la carte si nécessaire
+            if (!isMapOpen) {
+                map.setView(userCoords);
+            }
+        }
+        
+        function calculateRoute(startCoords) {
+            if (routingControl) {
+                map.removeControl(routingControl);
+            }
+            
+            // Configurer le contrôle d'itinéraire avec une ligne ROUGE
+            routingControl = L.Routing.control({
+                waypoints: [
+                    L.latLng(startCoords[0], startCoords[1]),
+                    L.latLng(mirrorDoorCoords[0], mirrorDoorCoords[1])
+                ],
+                routeWhileDragging: false,
+                showAlternatives: false,
+                fitSelectedRoutes: false,
+                show: false, // On cache le panneau par défaut
+                collapsible: true,
+                addWaypoints: false,
+                draggableWaypoints: false,
+                language: 'fr',
+                lineOptions: {
+                    styles: [{color: 'red', opacity: 0.9, weight: 6}]
+                },
+                createMarker: function(i, wp, nWps) {
+                    return null; // On ne veut pas de marqueurs supplémentaires
+                }
+            }).addTo(map);
+            
+            // Écouter les événements de routage
+            routingControl.on('routesfound', function(e) {
+                const routes = e.routes;
+                const instructions = routes[0].instructions;
+                currentRouteInstructions = instructions;
+                updateInstructionPanel(instructions, 0);
+                
+                // Vérifier périodiquement la position
+                setInterval(() => checkProgress(userMarker.getLatLng(), instructions), 5000);
+            });
+        }
+        
+        function updateInstructionPanel(instructions, currentStepIndex) {
+            const instructionsContainer = document.getElementById('instructions');
+            instructionsContainer.innerHTML = '';
+            
+            instructions.forEach((instruction, index) => {
+                const stepDiv = document.createElement('div');
+                stepDiv.className = `instruction-step ${index === currentStepIndex ? 'current-step' : ''}`;
+                stepDiv.innerHTML = `➔ ${instruction.text}`;
+                instructionsContainer.appendChild(stepDiv);
+            });
+            
+            instructionsContainer.scrollTop = instructionsContainer.scrollHeight;
+        }
+        
+        function checkProgress(currentPos, instructions) {
+            // Trouver l'étape la plus proche
+            let closestInstruction = null;
+            let minDistance = Infinity;
+            
+            instructions.forEach((instruction, index) => {
+                const distance = map.distance(currentPos, instruction.waypoint);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closestInstruction = index;
+                }
+            });
+            
+            // Mettre à jour le panneau d'instructions
+            if (closestInstruction !== null && minDistance < 50) { // 50m de seuil
+                updateInstructionPanel(instructions, closestInstruction);
+            }
+        }
+        
+        function handleGeolocationError(error) {
+            let message = "Erreur de géolocalisation : ";
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    message += "Vous avez refusé la géolocalisation.";
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    message += "La position n'a pas pu être déterminée.";
+                    break;
+                case error.TIMEOUT:
+                    message += "La requête a expiré.";
+                    break;
+                default:
+                    message += "Erreur inconnue.";
+            }
+            
+            alert(message);
+            map.setView(mirrorDoorCoords, 17);
+            
+            // Afficher quand même l'itinéraire depuis le centre-ville par défaut
+            const defaultStart = [47.7465, 7.3390];
+            calculateRoute(defaultStart);
         }
         
         function showMap() {
@@ -208,6 +303,16 @@
             document.getElementById('map-container').style.display = 'none';
             if (phraseIndex < phrases.length && charIndex < phrases[phraseIndex].length) {
                 typeWriter();
+            }
+        }
+        
+        function cleanupMap() {
+            if (watchId) {
+                navigator.geolocation.clearWatch(watchId);
+            }
+            if (map) {
+                map.remove();
+                map = null;
             }
         }
         
@@ -296,6 +401,10 @@
         window.onload = function() {
             setTimeout(typeWriter, 500);
             document.getElementById('close-map').addEventListener('click', hideMap);
+        };
+        
+        window.onbeforeunload = function() {
+            cleanupMap();
         };
         
         document.addEventListener('click', nextPhrase);
