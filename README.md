@@ -64,4 +64,6 @@ Players complete challenges to "escape" or unlock new areas of the city.
 ---
 
 ```sh
-GLENAC SALIM
+GLENAC Salim
+PINIER Sacha
+ZARIOUH Sakina
