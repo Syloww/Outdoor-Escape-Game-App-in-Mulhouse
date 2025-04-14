@@ -4,12 +4,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Aventure du Pigeon</title>
     <link rel="stylesheet" href="styles/dialogue.css">
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <!-- Leaflet Routing Machine CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+    <!-- Leaflet.awesome-markers -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css" />
     <style>
         #map-container {
             display: none;
@@ -18,58 +20,120 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.9);
             z-index: 1000;
             justify-content: center;
             align-items: center;
             flex-direction: column;
         }
         #map {
-            width: 90%;
-            height: 70%;
-            border: 3px solid white;
+            width: 95%;
+            height: 75%;
+            border: 3px solid #4a90e2;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
         }
         #close-map {
             position: absolute;
             top: 20px;
             right: 20px;
-            background: white;
+            background: #ff4757;
+            color: white;
             border: none;
-            padding: 10px 15px;
+            padding: 12px 18px;
             cursor: pointer;
             font-weight: bold;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        #close-map:hover {
+            background: #ff6b81;
+            transform: scale(1.05);
         }
         #instructions {
-            width: 90%;
+            width: 95%;
             height: 20%;
             background: white;
             margin-top: 10px;
-            padding: 10px;
+            padding: 15px;
             overflow-y: auto;
-            border: 2px solid #ccc;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-family: Arial, sans-serif;
         }
         .dialogue-link {
-            color: inherit;
+            color: #4a90e2;
             text-decoration: underline;
             cursor: pointer;
+            font-weight: bold;
         }
         .instruction-step {
-            margin-bottom: 5px;
-            padding: 5px;
+            margin-bottom: 8px;
+            padding: 8px;
             border-bottom: 1px solid #eee;
+            transition: all 0.3s;
         }
         .current-step {
             font-weight: bold;
-            background-color: #f0f0f0;
+            background-color: #e6f2ff;
+            border-left: 4px solid #4a90e2;
+            padding-left: 12px;
+        }
+        .distance-indicator {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-weight: bold;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            z-index: 1001;
+        }
+        .compass {
+            position: absolute;
+            top: 70px;
+            left: 20px;
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            z-index: 1001;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+        }
+        .progress-container {
+            width: 100%;
+            height: 5px;
+            background: #eee;
+            margin-top: 5px;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            height: 100%;
+            background: #4a90e2;
+            width: 0%;
+            transition: width 0.5s;
         }
     </style>
 </head>
 
 <body>
     <div id="map-container">
-        <button id="close-map">Fermer la carte</button>
+        <button id="close-map">✕ Fermer</button>
+        <div class="distance-indicator" id="distance-indicator">Distance: --</div>
+        <div class="compass" id="compass">↑</div>
         <div id="map"></div>
-        <div id="instructions"></div>
+        <div id="instructions">
+            <div class="progress-container">
+                <div class="progress-bar" id="progress-bar"></div>
+            </div>
+        </div>
     </div>
 
     <div class="pigeon-container">
@@ -83,18 +147,10 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <!-- Leaflet Routing Machine JS -->
     <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
-    <!-- Custom red icon for marker -->
-    <script>
-        // Création d'une icône rouge personnalisée
-        const redIcon = new L.Icon({
-            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-            iconSize: [25, 41],
-            iconAnchor: [12, 41],
-            popupAnchor: [1, -34],
-            shadowSize: [41, 41]
-        });
-    </script>
+    <!-- Leaflet.awesome-markers -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.min.js"></script>
+    <!-- Leaflet.Geolocation -->
+    <script src="https://unpkg.com/leaflet.geolocation@1.0.4/dist/leaflet.geolocation.min.js"></script>
 
     <script>
         const phrases = [
@@ -118,25 +174,68 @@
         let isTyping = false;
         let typingTimeout;
         let isMapOpen = false;
-        let map, routingControl, userMarker, watchId;
+        let map, routingControl, userMarker, watchId, accuracyCircle;
         let currentRouteInstructions = [];
+        let totalDistance = 0;
+        let remainingDistance = 0;
+        let currentHeading = 0;
 
-        // Coordonnées exactes de la mirror door
-        const mirrorDoorCoords = [47.748381528597086, 7.333458419631289];
+        // Coordonnées des points d'intérêt
+        const pointsOfInterest = {
+            mirrorDoor: {
+                coords: [47.748381528597086, 7.333458419631289],
+                name: "Mirror Door",
+                icon: "map-marker-alt"
+            },
+            gardenOfFragrance: {
+                coords: [47.7475, 7.3320],
+                name: "Garden of Fragrance",
+                icon: "leaf"
+            },
+            gambrinus: {
+                coords: [47.7490, 7.3350],
+                name: "Gambrinus Bar",
+                icon: "beer"
+            },
+            placeReunion: {
+                coords: [47.7500, 7.3400],
+                name: "Place de la Réunion",
+                icon: "landmark"
+            }
+        };
         
         function initMap() {
             // Créer la carte centrée sur la destination
-            map = L.map('map').setView(mirrorDoorCoords, 17);
+            map = L.map('map', {
+                zoomControl: false,
+                doubleClickZoom: false,
+                closePopupOnClick: false
+            }).setView(pointsOfInterest.mirrorDoor.coords, 18);
             
-            // Ajouter la couche de tuiles OpenStreetMap
+            // Ajouter la couche de tuiles OpenStreetMap avec un style plus contrasté
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                maxZoom: 19
             }).addTo(map);
             
-            // Marqueur ROUGE pour la destination (mirror door)
-            L.marker(mirrorDoorCoords, {icon: redIcon}).addTo(map)
-                .bindPopup("<b>Mirror Door</b><br>Destination")
+            // Ajouter un contrôle de zoom personnalisé
+            L.control.zoom({
+                position: 'topright'
+            }).addTo(map);
+            
+            // Ajouter tous les points d'intérêt avec des icônes personnalisées
+            Object.values(pointsOfInterest).forEach(poi => {
+                L.marker(poi.coords, {
+                    icon: L.AwesomeMarkers.icon({
+                        icon: poi.icon,
+                        markerColor: 'red',
+                        prefix: 'fa',
+                        extraClasses: 'fa-rotate-0'
+                    })
+                }).addTo(map)
+                .bindPopup(`<b>${poi.name}</b>`)
                 .openPopup();
+            });
             
             // Démarrer le suivi GPS
             startGPSTracking();
@@ -147,7 +246,7 @@
                 // Options pour une haute précision
                 const options = {
                     enableHighAccuracy: true,
-                    timeout: 5000,
+                    timeout: 10000,
                     maximumAge: 0
                 };
                 
@@ -157,9 +256,14 @@
                     error => handleGeolocationError(error),
                     options
                 );
+                
+                // Écouter l'orientation du dispositif si disponible
+                if (window.DeviceOrientationEvent) {
+                    window.addEventListener('deviceorientation', handleOrientation);
+                }
             } else {
                 alert("La géolocalisation n'est pas supportée par votre navigateur.");
-                map.setView(mirrorDoorCoords, 8);
+                map.setView(pointsOfInterest.mirrorDoor.coords, 15);
             }
         }
         
@@ -167,16 +271,23 @@
             const userCoords = [position.coords.latitude, position.coords.longitude];
             const accuracy = position.coords.accuracy;
             
-            // Créer ou mettre à jour le marqueur de position
+            // Mettre à jour le marqueur de position
             if (!userMarker) {
-                userMarker = L.marker(userCoords).addTo(map)
-                    .bindPopup("<b>Votre position</b>")
-                    .openPopup();
+                userMarker = L.marker(userCoords, {
+                    icon: L.AwesomeMarkers.icon({
+                        icon: 'user',
+                        markerColor: 'blue',
+                        prefix: 'fa'
+                    }),
+                    zIndexOffset: 1000
+                }).addTo(map)
+                .bindPopup("<b>Votre position</b>")
+                .openPopup();
                 
                 // Ajouter un cercle de précision
-                L.circle(userCoords, {
-                    color: 'blue',
-                    fillColor: '#30f',
+                accuracyCircle = L.circle(userCoords, {
+                    color: '#4285F4',
+                    fillColor: '#4285F4',
                     fillOpacity: 0.2,
                     radius: accuracy
                 }).addTo(map);
@@ -185,11 +296,63 @@
                 calculateRoute(userCoords);
             } else {
                 userMarker.setLatLng(userCoords);
+                accuracyCircle.setLatLng(userCoords).setRadius(accuracy);
             }
+            
+            // Mettre à jour la distance
+            updateDistance(userCoords);
             
             // Recentrer légèrement la carte si nécessaire
             if (!isMapOpen) {
-                map.setView(userCoords);
+                const newCenter = L.latLng(
+                    (userCoords[0] + pointsOfInterest.mirrorDoor.coords[0]) / 2,
+                    (userCoords[1] + pointsOfInterest.mirrorDoor.coords[1]) / 2
+                );
+                map.setView(newCenter);
+            }
+        }
+        
+        function updateDistance(userCoords) {
+            const destination = pointsOfInterest.mirrorDoor.coords;
+            const distance = map.distance(userCoords, destination);
+            remainingDistance = distance;
+            
+            // Mettre à jour l'affichage de la distance
+            const distanceElement = document.getElementById('distance-indicator');
+            if (distance < 1000) {
+                distanceElement.textContent = `Distance: ${Math.round(distance)} mètres`;
+            } else {
+                distanceElement.textContent = `Distance: ${(distance/1000).toFixed(1)} km`;
+            }
+            
+            // Mettre à jour la barre de progression
+            if (totalDistance > 0) {
+                const progress = Math.max(0, Math.min(100, 100 - (distance / totalDistance * 100)));
+                document.getElementById('progress-bar').style.width = `${progress}%`;
+            }
+        }
+        
+        function handleOrientation(event) {
+            if (event.alpha !== null && userMarker) {
+                currentHeading = event.alpha;
+                updateCompass();
+                rotateUserMarker();
+            }
+        }
+        
+        function updateCompass() {
+            const compass = document.getElementById('compass');
+            const directions = ['↑ N', '↗ NE', '→ E', '↘ SE', '↓ S', '↙ SW', '← W', '↖ NW'];
+            const index = Math.round(((currentHeading % 360) / 45)) % 8;
+            compass.textContent = directions[index];
+            compass.style.transform = `rotate(${currentHeading}deg)`;
+        }
+        
+        function rotateUserMarker() {
+            if (userMarker) {
+                const icon = userMarker.options.icon;
+                icon.options.extraClasses = `fa-rotate-${360 - currentHeading}`;
+                userMarker.setIcon(icon);
             }
         }
         
@@ -198,57 +361,77 @@
                 map.removeControl(routingControl);
             }
             
-            // Configurer le contrôle d'itinéraire avec une ligne ROUGE
+            // Configurer le contrôle d'itinéraire
             routingControl = L.Routing.control({
                 waypoints: [
                     L.latLng(startCoords[0], startCoords[1]),
-                    L.latLng(mirrorDoorCoords[0], mirrorDoorCoords[1])
+                    L.latLng(pointsOfInterest.mirrorDoor.coords[0], pointsOfInterest.mirrorDoor.coords[1])
                 ],
                 routeWhileDragging: false,
                 showAlternatives: false,
                 fitSelectedRoutes: false,
-                show: false, // On cache le panneau par défaut
+                show: false,
                 collapsible: true,
                 addWaypoints: false,
                 draggableWaypoints: false,
                 language: 'fr',
                 lineOptions: {
-                    styles: [{color: 'red', opacity: 0.9, weight: 6}]
+                    styles: [{color: '#4285F4', opacity: 0.9, weight: 6}]
                 },
-                createMarker: function(i, wp, nWps) {
-                    return null; // On ne veut pas de marqueurs supplémentaires
-                }
+                createMarker: () => null
             }).addTo(map);
             
             // Écouter les événements de routage
             routingControl.on('routesfound', function(e) {
                 const routes = e.routes;
-                const instructions = routes[0].instructions;
-                currentRouteInstructions = instructions;
-                updateInstructionPanel(instructions, 0);
-                
-                // Vérifier périodiquement la position
-                setInterval(() => checkProgress(userMarker.getLatLng(), instructions), 5000);
+                if (routes && routes.length > 0) {
+                    totalDistance = routes[0].summary.totalDistance;
+                    remainingDistance = totalDistance;
+                    const instructions = routes[0].instructions;
+                    currentRouteInstructions = instructions;
+                    updateInstructionPanel(instructions, 0);
+                    
+                    // Vérifier périodiquement la position
+                    setInterval(() => checkProgress(userMarker.getLatLng(), instructions), 3000);
+                }
             });
         }
         
         function updateInstructionPanel(instructions, currentStepIndex) {
             const instructionsContainer = document.getElementById('instructions');
+            // Garder la barre de progression
+            const progressBar = instructionsContainer.querySelector('.progress-container');
             instructionsContainer.innerHTML = '';
+            if (progressBar) instructionsContainer.appendChild(progressBar);
             
             instructions.forEach((instruction, index) => {
                 const stepDiv = document.createElement('div');
                 stepDiv.className = `instruction-step ${index === currentStepIndex ? 'current-step' : ''}`;
-                stepDiv.innerHTML = `➔ ${instruction.text}`;
+                
+                // Formater la distance
+                let distanceText = '';
+                if (instruction.distance > 1000) {
+                    distanceText = ` (${(instruction.distance/1000).toFixed(1)} km)`;
+                } else if (instruction.distance > 0) {
+                    distanceText = ` (${Math.round(instruction.distance)} m)`;
+                }
+                
+                stepDiv.innerHTML = `➔ ${instruction.text}${distanceText}`;
                 instructionsContainer.appendChild(stepDiv);
             });
             
-            instructionsContainer.scrollTop = instructionsContainer.scrollHeight;
+            // Faire défiler jusqu'à l'étape actuelle
+            const currentStep = instructionsContainer.querySelector('.current-step');
+            if (currentStep) {
+                currentStep.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
         }
         
         function checkProgress(currentPos, instructions) {
+            if (!instructions || instructions.length === 0) return;
+            
             // Trouver l'étape la plus proche
-            let closestInstruction = null;
+            let closestInstruction = 0;
             let minDistance = Infinity;
             
             instructions.forEach((instruction, index) => {
@@ -259,9 +442,17 @@
                 }
             });
             
-            // Mettre à jour le panneau d'instructions
-            if (closestInstruction !== null && minDistance < 50) { // 50m de seuil
+            // Mettre à jour le panneau d'instructions si on est proche d'une nouvelle étape
+            if (minDistance < 30) { // 30m de seuil
                 updateInstructionPanel(instructions, closestInstruction);
+            }
+            
+            // Vérifier si l'utilisateur est arrivé à destination
+            const destination = pointsOfInterest.mirrorDoor.coords;
+            const destinationDistance = map.distance(currentPos, destination);
+            if (destinationDistance < 20) { // 20m pour considérer arrivé
+                document.getElementById('distance-indicator').textContent = "Vous êtes arrivé!";
+                document.getElementById('progress-bar').style.width = "100%";
             }
         }
         
@@ -269,20 +460,20 @@
             let message = "Erreur de géolocalisation : ";
             switch(error.code) {
                 case error.PERMISSION_DENIED:
-                    message += "Vous avez refusé la géolocalisation.";
+                    message += "Vous avez refusé la géolocalisation. Activez-la dans les paramètres de votre navigateur.";
                     break;
                 case error.POSITION_UNAVAILABLE:
-                    message += "La position n'a pas pu être déterminée.";
+                    message += "La position n'a pas pu être déterminée. Vérifiez votre connexion.";
                     break;
                 case error.TIMEOUT:
-                    message += "La requête a expiré.";
+                    message += "La requête a expiré. Essayez dans une zone avec meilleure réception.";
                     break;
                 default:
                     message += "Erreur inconnue.";
             }
             
             alert(message);
-            map.setView(mirrorDoorCoords, 17);
+            map.setView(pointsOfInterest.mirrorDoor.coords, 15);
             
             // Afficher quand même l'itinéraire depuis le centre-ville par défaut
             const defaultStart = [47.7465, 7.3390];
@@ -294,6 +485,11 @@
             document.getElementById('map-container').style.display = 'flex';
             if (!map) {
                 initMap();
+            } else {
+                // Recentrer sur la position utilisateur si disponible
+                if (userMarker) {
+                    map.setView(userMarker.getLatLng(), 18);
+                }
             }
             clearTimeout(typingTimeout);
         }
@@ -309,6 +505,9 @@
         function cleanupMap() {
             if (watchId) {
                 navigator.geolocation.clearWatch(watchId);
+            }
+            if (window.DeviceOrientationEvent) {
+                window.removeEventListener('deviceorientation', handleOrientation);
             }
             if (map) {
                 map.remove();
@@ -350,7 +549,7 @@
                         charIndex++;
                     }
                     
-                    typingTimeout = setTimeout(typeWriter, 50);
+                    typingTimeout = setTimeout(typeWriter, 30); // Vitesse de frappe légèrement augmentée
                 } else {
                     isTyping = false;
                     if (phraseIndex === 0) {
@@ -401,6 +600,12 @@
         window.onload = function() {
             setTimeout(typeWriter, 500);
             document.getElementById('close-map').addEventListener('click', hideMap);
+            
+            // Détection de la plateforme pour ajuster l'interface
+            if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+                document.getElementById('map').style.height = '65%';
+                document.getElementById('instructions').style.height = '25%';
+            }
         };
         
         window.onbeforeunload = function() {
