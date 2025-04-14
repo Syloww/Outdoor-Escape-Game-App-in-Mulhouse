@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Pigeon Adventure GPS</title>
+    <link rel="stylesheet" href="styles/dialogue.css">
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <!-- Leaflet Routing Machine CSS -->
@@ -12,6 +13,7 @@
     <!-- Font Awesome pour les icônes -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        /* Style général amélioré */
         body {
             margin: 0;
             padding: 0;
@@ -30,20 +32,60 @@
             background: #121a25;
             z-index: 1000;
             flex-direction: column;
+            box-shadow: 0 -5px 25px rgba(0, 0, 0, 0.5);
+            transition: transform 0.3s ease;
         }
 
+        /* Barre de statut GPS */
+        .gps-status-bar {
+            background: #000;
+            color: #fff;
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            border-bottom: 1px solid #333;
+        }
+
+        .gps-signal {
+            display: flex;
+            align-items: center;
+        }
+
+        .signal-bars {
+            display: flex;
+            align-items: flex-end;
+            margin-right: 8px;
+            height: 15px;
+        }
+
+        .signal-bar {
+            width: 3px;
+            margin-right: 2px;
+            background: #4CAF50;
+        }
+
+        .signal-bar:nth-child(1) { height: 25%; }
+        .signal-bar:nth-child(2) { height: 50%; }
+        .signal-bar:nth-child(3) { height: 75%; }
+        .signal-bar:nth-child(4) { height: 100%; }
+
+        /* Conteneur de la carte */
         .map-wrapper {
             position: relative;
+            flex: 1;
             width: 100%;
-            height: 70%;
             overflow: hidden;
         }
 
         #map {
             width: 100%;
             height: 100%;
+            transition: all 0.3s ease;
         }
 
+        /* Bouton de fermeture amélioré */
         #close-map {
             position: absolute;
             top: 15px;
@@ -61,8 +103,16 @@
             justify-content: center;
             align-items: center;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            transition: all 0.2s ease;
         }
 
+        #close-map:hover {
+            background: rgba(255, 255, 255, 0.9);
+            color: #000;
+            transform: scale(1.1);
+        }
+
+        /* Panneau d'instructions amélioré */
         #instructions-container {
             background: #1e293b;
             color: #fff;
@@ -72,6 +122,7 @@
             display: flex;
             flex-direction: column;
             border-top: 2px solid #334155;
+            box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.3);
         }
 
         .instructions-header {
@@ -97,8 +148,15 @@
             border-radius: 6px;
             background: rgba(255, 255, 255, 0.05);
             border-left: 3px solid transparent;
+            transition: all 0.2s ease;
             display: flex;
             align-items: center;
+        }
+
+        .instruction-step i {
+            margin-right: 10px;
+            color: #60a5fa;
+            font-size: 14px;
         }
 
         .current-step {
@@ -116,6 +174,7 @@
             color: #e2e8f0;
         }
 
+        /* Bouton de localisation */
         .locate-btn {
             position: absolute;
             bottom: 20px;
@@ -131,6 +190,12 @@
             justify-content: center;
             align-items: center;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            transition: all 0.2s ease;
+        }
+
+        .locate-btn:hover {
+            background: white;
+            transform: scale(1.05);
         }
 
         .locate-btn i {
@@ -138,42 +203,70 @@
             font-size: 20px;
         }
 
-        .pulse-dot {
+        /* Animation de chargement GPS */
+        .gps-loading {
             position: absolute;
-            width: 16px;
-            height: 16px;
-            background-color: #3b82f6;
-            border-radius: 50%;
-            top: 2px;
-            left: 2px;
-            animation: pulse 2s infinite;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            z-index: 1001;
+            font-size: 14px;
         }
 
-        .inner-dot {
-            position: absolute;
-            width: 8px;
-            height: 8px;
-            background-color: white;
-            border-radius: 50%;
-            top: 6px;
-            left: 6px;
-            z-index: 2;
+        .gps-loading i {
+            margin-right: 10px;
+            animation: spin 1s linear infinite;
         }
 
-        @keyframes pulse {
-            0% { transform: scale(1); opacity: 1; }
-            70% { transform: scale(3); opacity: 0; }
-            100% { transform: scale(1); opacity: 0; }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Style pour le dialogue */
+        .dialogue-link {
+            color: #3b82f6;
+            text-decoration: none;
+            font-weight: 500;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+        .dialogue-link:hover {
+            color: #2563eb;
+            text-decoration: underline;
         }
     </style>
 </head>
 
 <body>
     <div id="map-container">
+        <div class="gps-status-bar">
+            <div class="gps-time" id="gps-time">--:--</div>
+            <div class="gps-signal">
+                <div class="signal-bars" id="signal-bars">
+                    <div class="signal-bar"></div>
+                    <div class="signal-bar"></div>
+                    <div class="signal-bar"></div>
+                    <div class="signal-bar"></div>
+                </div>
+                <span>GPS</span>
+            </div>
+        </div>
+        
         <div class="map-wrapper">
             <div id="map"></div>
             <button id="close-map" title="Fermer la carte"><i class="fas fa-times"></i></button>
             <button class="locate-btn" id="locate-btn" title="Centrer sur ma position"><i class="fas fa-location-arrow"></i></button>
+            <div class="gps-loading" id="gps-loading" style="display: none;">
+                <i class="fas fa-satellite-dish"></i> Recherche du signal GPS...
+            </div>
         </div>
         
         <div id="instructions-container">
@@ -185,46 +278,110 @@
         </div>
     </div>
 
+    <div class="pigeon-container">
+        <img src="images/pigeon.png" alt="pigeon" class="pigeon">
+    </div>
+    <div class="dialogue-box">
+        <span id="dialogue-text"></span>
+    </div>
+
+    <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Leaflet Routing Machine JS -->
     <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <!-- Custom red icon for marker -->
+    <script>
+        // Création d'une icône rouge personnalisée
+        const redIcon = new L.Icon({
+            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowSize: [41, 41]
+        });
+    </script>
 
     <script>
-        // Coordonnées exactes de la mirror door
-        const mirrorDoorCoords = [47.748381528597086, 7.333458419631289];
+        const phrases = [
+            "Before I tell you my story, come and see me at the mirror door.",
+            "Here I am in front of the Mirror Gate... Did you know that this place has quite a history? It all began in 1852 with Madame Koechlin, a great lady of Mulhouse. She set up the Comités de Patronage to help people in their own homes. In 1923, this district became the Patronage du Quartier Sud, then in 1957, the Centre Social Pont d'Altkirch, thanks to Madame Dolfus. It was a place for care and meetings...",
+            "...but today it's also a place where some mad scientists put this tracking collar on me! I've managed to escape from their lab, but to really be free, I have to deactivate three modules hidden around Mulhouse. And guess what? The first is right here, in this garden full of mysteries. So let's get on with the adventure!",
+            "First, off to the Garden of Fragrance! The first module is hidden away in a corner. Use the map to find your way!",
+            "Created in 1987, this 1,500 m² garden was designed by ophthalmologist Dr Rolf Benner to help blind and partially sighted people use their sense of smell and touch to find their way around.",
+            "I'm allergic to pollen, so I can hardly see anything. I have to pop all the balloons by following their sound: only the ones that beep sharply! The others are trapped and spread pollen. By ear and sneezing, I pop them one by one until the last one explodes.",
+            "Yippee! I did it! Thanks for helping me!!! Now cape to the Gambrinus!",
+            "Here I am in front of the Gambrinus, the liveliest bar in Mulhouse. My sensor is flashing: to deactivate it, you have to pour EXACTLY the right amount into the marked glass!",
+            "Yippee! I did it! Thank you for helping me! Finally, we meet on the place de la reunion opposite the historical museum.",
+            "The statue on the Place de la Réunion in Mulhouse represents William Tell, the legendary Swiss hero. According to tradition, he was forced by the Austrian governor Gessler to shoot an arrow at an apple placed on his son's head. His perfect shot made him a symbol of resistance and freedom. This statue is a reminder of the historic links between Mulhouse and Switzerland, before the town joined France in 1798.",
+            "I've almost done it! The collar is half deactivated, but to blow it up DEFINITELY, I still have to do the ultimate test: The Dart Shot",
+            "Yippee! I did it! Thank you for helping me!!! Now I'm going back to my life as a heroic pigeon! Maybe one day we'll meet up again for a new adventure... In the meantime, stay smart like a pigeon!"
+        ];
+        
+        const dialogueElement = document.getElementById('dialogue-text');
+        let phraseIndex = 0;
+        let charIndex = 0;
+        let isTyping = false;
+        let typingTimeout;
+        let isMapOpen = false;
         let map, routingControl, userMarker, watchId;
         let currentRouteInstructions = [];
         let currentStepIndex = 0;
         let totalDistance = 0;
 
+        // Coordonnées exactes de la mirror door
+        const mirrorDoorCoords = [47.748381528597086, 7.333458419631289];
+        
         function initMap() {
             // Créer la carte centrée sur la destination
             map = L.map('map', {
-                zoomControl: false
+                zoomControl: false,
+                doubleClickZoom: false,
+                closePopupOnClick: false,
+                tap: false,
+                inertia: true,
+                inertiaDeceleration: 3000
             }).setView(mirrorDoorCoords, 17);
             
-            // Ajouter la couche de tuiles OpenStreetMap
+            // Ajouter la couche de tuiles OpenStreetMap avec un style plus contrasté
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                detectRetina: true
             }).addTo(map);
             
-            // Marqueur pour la destination (mirror door)
-            L.marker(mirrorDoorCoords).addTo(map)
+            // Ajouter le contrôle de zoom personnalisé
+            L.control.zoom({
+                position: 'bottomright'
+            }).addTo(map);
+            
+            // Marqueur ROUGE pour la destination (mirror door)
+            L.marker(mirrorDoorCoords, {icon: redIcon}).addTo(map)
                 .bindPopup("<b>Mirror Door</b><br>Destination")
                 .openPopup();
             
             // Démarrer le suivi GPS
             startGPSTracking();
+            
+            // Mettre à jour l'heure en temps réel
+            updateTime();
+            setInterval(updateTime, 60000);
+            
+            // Simuler la force du signal GPS
+            simulateGPSSignal();
         }
         
         function startGPSTracking() {
+            document.getElementById('gps-loading').style.display = 'flex';
+            
             if (navigator.geolocation) {
+                // Options pour une haute précision
                 const options = {
                     enableHighAccuracy: true,
                     timeout: 10000,
                     maximumAge: 0
                 };
                 
+                // Démarrer le watchPosition pour un suivi continu
                 watchId = navigator.geolocation.watchPosition(
                     position => updatePosition(position),
                     error => handleGeolocationError(error),
@@ -232,11 +389,14 @@
                 );
             } else {
                 alert("La géolocalisation n'est pas supportée par votre navigateur.");
-                map.setView(mirrorDoorCoords, 17);
+                map.setView(mirrorDoorCoords, 8);
+                document.getElementById('gps-loading').style.display = 'none';
             }
         }
         
         function updatePosition(position) {
+            document.getElementById('gps-loading').style.display = 'none';
+            
             const userCoords = [position.coords.latitude, position.coords.longitude];
             const accuracy = position.coords.accuracy;
             
@@ -249,7 +409,9 @@
                         iconSize: [20, 20],
                         iconAnchor: [10, 10]
                     })
-                }).addTo(map);
+                }).addTo(map)
+                    .bindPopup("<b>Votre position</b>")
+                    .openPopup();
                 
                 // Ajouter un cercle de précision
                 L.circle(userCoords, {
@@ -262,8 +424,13 @@
                 // Calculer l'itinéraire initial
                 calculateRoute(userCoords);
                 
-                // Centrer la carte sur la position
-                map.setView(userCoords, 17);
+                // Centrer la carte sur la position avec un léger décalage pour laisser de la place aux instructions
+                map.setView(userCoords, 17, {
+                    animate: true,
+                    duration: 1,
+                    easeLinearity: 0.3,
+                    noMoveStart: false
+                });
             } else {
                 userMarker.setLatLng(userCoords);
                 
@@ -284,7 +451,7 @@
                 map.removeControl(routingControl);
             }
             
-            // Configurer le contrôle d'itinéraire
+            // Configurer le contrôle d'itinéraire avec une ligne bleue
             routingControl = L.Routing.control({
                 waypoints: [
                     L.latLng(startCoords[0], startCoords[1]),
@@ -316,6 +483,13 @@
                 
                 // Mettre à jour le panneau d'instructions
                 updateInstructionPanel(instructions, 0);
+                
+                // Vérifier périodiquement la position
+                setInterval(() => {
+                    if (userMarker) {
+                        checkProgress(userMarker.getLatLng(), instructions);
+                    }
+                }, 5000);
             });
         }
         
@@ -372,6 +546,13 @@
             // Mettre à jour le panneau d'instructions si on est proche d'une nouvelle étape
             if (closestInstruction !== null && minDistance < 30 && closestInstruction !== currentStepIndex) {
                 updateInstructionPanel(instructions, closestInstruction);
+                
+                // Animation visuelle pour la nouvelle étape
+                const instructionsContainer = document.getElementById('instructions');
+                instructionsContainer.style.transform = 'translateX(5px)';
+                setTimeout(() => {
+                    instructionsContainer.style.transform = 'translateX(0)';
+                }, 100);
             }
             
             // Mettre à jour les distances affichées
@@ -392,22 +573,37 @@
         }
         
         function handleGeolocationError(error) {
+            document.getElementById('gps-loading').style.display = 'none';
+            
             let message = "Erreur de géolocalisation : ";
             switch(error.code) {
                 case error.PERMISSION_DENIED:
-                    message += "Vous avez refusé la géolocalisation.";
+                    message += "Vous avez refusé la géolocalisation. Activez-la dans les paramètres de votre navigateur.";
                     break;
                 case error.POSITION_UNAVAILABLE:
-                    message += "La position n'a pas pu être déterminée.";
+                    message += "La position n'a pas pu être déterminée. Vérifiez votre connexion.";
                     break;
                 case error.TIMEOUT:
-                    message += "La requête a expiré.";
+                    message += "La requête a expiré. Vérifiez votre connexion Internet.";
                     break;
                 default:
                     message += "Erreur inconnue.";
             }
             
-            alert(message);
+            // Afficher un message plus élégant qu'une alerte
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'gps-error-message';
+            errorDiv.innerHTML = `
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>${message}</span>
+            `;
+            document.querySelector('.map-wrapper').appendChild(errorDiv);
+            
+            setTimeout(() => {
+                errorDiv.style.opacity = '0';
+                setTimeout(() => errorDiv.remove(), 500);
+            }, 5000);
+            
             map.setView(mirrorDoorCoords, 17);
             
             // Afficher quand même l'itinéraire depuis le centre-ville par défaut
@@ -415,15 +611,68 @@
             calculateRoute(defaultStart);
         }
         
+        function updateTime() {
+            const now = new Date();
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            document.getElementById('gps-time').textContent = `${hours}:${minutes}`;
+        }
+        
+        function simulateGPSSignal() {
+            const bars = document.querySelectorAll('.signal-bar');
+            
+            // Animation aléatoire des barres de signal
+            setInterval(() => {
+                bars.forEach((bar, index) => {
+                    // Plus de chances d'avoir des barres pleines à gauche
+                    const randomValue = Math.random();
+                    const threshold = 0.3 + (index * 0.15);
+                    
+                    if (randomValue > threshold) {
+                        bar.style.opacity = '1';
+                    } else {
+                        bar.style.opacity = '0.3';
+                    }
+                });
+            }, 2000);
+        }
+        
         function showMap() {
+            isMapOpen = true;
             document.getElementById('map-container').style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+            
+            // Petite animation d'entrée
+            document.getElementById('map-container').style.transform = 'translateY(0)';
+            
             if (!map) {
                 initMap();
+            } else {
+                // Recentrer sur la position de l'utilisateur si disponible
+                if (userMarker) {
+                    map.setView(userMarker.getLatLng(), 17, {
+                        animate: true,
+                        duration: 0.5
+                    });
+                }
             }
+            
+            clearTimeout(typingTimeout);
         }
         
         function hideMap() {
-            document.getElementById('map-container').style.display = 'none';
+            isMapOpen = false;
+            
+            // Animation de sortie
+            document.getElementById('map-container').style.transform = 'translateY(100%)';
+            setTimeout(() => {
+                document.getElementById('map-container').style.display = 'none';
+                document.body.style.overflow = 'auto';
+            }, 300);
+            
+            if (phraseIndex < phrases.length && charIndex < phrases[phraseIndex].length) {
+                typeWriter();
+            }
         }
         
         function cleanupMap() {
@@ -436,7 +685,91 @@
             }
         }
         
+        function typeWriter() {
+            if (isMapOpen) return;
+
+            isTyping = true;
+            if (phraseIndex < phrases.length) {
+                if (charIndex < phrases[phraseIndex].length) {
+                    if (phraseIndex === 0) {
+                        const baseText = "Before I tell you my story, come and see me at the ";
+                        const linkText = "mirror door";
+                        
+                        if (charIndex < baseText.length) {
+                            dialogueElement.innerHTML = baseText.substring(0, charIndex + 1);
+                            charIndex++;
+                        } else {
+                            const linkPos = charIndex - baseText.length;
+                            if (linkPos < linkText.length) {
+                                if (linkPos === 0) {
+                                    dialogueElement.innerHTML = baseText + 
+                                        '<span class="dialogue-link" id="mirror-door-link">' + 
+                                        linkText.substring(0, linkPos + 1) + '</span>';
+                                } else {
+                                    const link = document.getElementById('mirror-door-link');
+                                    if (link) {
+                                        link.textContent = linkText.substring(0, linkPos + 1);
+                                    }
+                                }
+                                charIndex++;
+                            }
+                        }
+                    } else {
+                        dialogueElement.innerHTML = phrases[phraseIndex].substring(0, charIndex + 1);
+                        charIndex++;
+                    }
+                    
+                    typingTimeout = setTimeout(typeWriter, 50);
+                } else {
+                    isTyping = false;
+                    if (phraseIndex === 0) {
+                        const link = document.getElementById('mirror-door-link');
+                        if (link) {
+                            link.addEventListener('click', function(e) {
+                                e.preventDefault();
+                                showMap();
+                            });
+                        }
+                    }
+                }
+            }
+        }
+        
+        function nextPhrase() {
+            if (isMapOpen) return;
+
+            if (isTyping) {
+                if (phraseIndex === 0) {
+                    dialogueElement.innerHTML = "Before I tell you my story, come and see me at the " +
+                        '<span class="dialogue-link" id="mirror-door-link">mirror door</span>';
+                    
+                    const link = document.getElementById('mirror-door-link');
+                    if (link) {
+                        link.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            showMap();
+                        });
+                    }
+                } else {
+                    dialogueElement.innerHTML = phrases[phraseIndex];
+                }
+                charIndex = phrases[phraseIndex].length;
+                isTyping = false;
+                clearTimeout(typingTimeout);
+                return;
+            }
+            
+            phraseIndex++;
+            charIndex = 0;
+            dialogueElement.innerHTML = '';
+            if (phraseIndex < phrases.length) {
+                typeWriter();
+            }
+        }
+        
         window.onload = function() {
+            setTimeout(typeWriter, 500);
+            
             // Bouton de fermeture
             document.getElementById('close-map').addEventListener('click', hideMap);
             
@@ -447,6 +780,17 @@
                         animate: true,
                         duration: 0.5
                     });
+                    
+                    // Petite animation de feedback
+                    this.style.transform = 'scale(1.1)';
+                    this.style.background = '#3b82f6';
+                    this.querySelector('i').style.color = 'white';
+                    
+                    setTimeout(() => {
+                        this.style.transform = 'scale(1)';
+                        this.style.background = 'rgba(255, 255, 255, 0.9)';
+                        this.querySelector('i').style.color = '#1e40af';
+                    }, 300);
                 }
             });
         };
@@ -454,6 +798,8 @@
         window.onbeforeunload = function() {
             cleanupMap();
         };
+        
+        document.addEventListener('click', nextPhrase);
     </script>
 </body>
 
