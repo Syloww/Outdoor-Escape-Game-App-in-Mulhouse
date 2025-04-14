@@ -158,12 +158,12 @@
             "Before I tell you my story, come and see me at the mirror door.",
             "Here I am in front of the Mirror Gate... Did you know that this place has quite a history? It all began in 1852 with Madame Koechlin, a great lady of Mulhouse. She set up the Comités de Patronage to help people in their own homes. In 1923, this district became the Patronage du Quartier Sud, then in 1957, the Centre Social Pont d'Altkirch, thanks to Madame Dolfus. It was a place for care and meetings...",
             "...but today it's also a place where some mad scientists put this tracking collar on me! I've managed to escape from their lab, but to really be free, I have to deactivate three modules hidden around Mulhouse. And guess what? The first is right here, in this garden full of mysteries. So let's get on with the adventure!",
-            "First, off to the Garden of Fragrance! The first module is hidden away in a corner. Use the map to find your way!",
+            "First, off to the <span class='dialogue-link' data-destination='gardenOfFragrance'>Garden of Fragrance</span>! The first module is hidden away in a corner. Use the map to find your way!",
             "Created in 1987, this 1,500 m² garden was designed by ophthalmologist Dr Rolf Benner to help blind and partially sighted people use their sense of smell and touch to find their way around.",
             "I'm allergic to pollen, so I can hardly see anything. I have to pop all the balloons by following their sound: only the ones that beep sharply! The others are trapped and spread pollen. By ear and sneezing, I pop them one by one until the last one explodes.",
-            "Yippee! I did it! Thanks for helping me!!! Now cape to the Gambrinus!",
+            "Yippee! I did it! Thanks for helping me!!! Now head to the <span class='dialogue-link' data-destination='gambrinus'>Gambrinus</span>!",
             "Here I am in front of the Gambrinus, the liveliest bar in Mulhouse. My sensor is flashing: to deactivate it, you have to pour EXACTLY the right amount into the marked glass!",
-            "Yippee! I did it! Thank you for helping me! Finally, we meet on the place de la reunion opposite the historical museum.",
+            "Yippee! I did it! Thank you for helping me! Finally, meet me at the <span class='dialogue-link' data-destination='placeReunion'>Place de la Réunion</span> opposite the historical museum.",
             "The statue on the Place de la Réunion in Mulhouse represents William Tell, the legendary Swiss hero. According to tradition, he was forced by the Austrian governor Gessler to shoot an arrow at an apple placed on his son's head. His perfect shot made him a symbol of resistance and freedom. This statue is a reminder of the historic links between Mulhouse and Switzerland, before the town joined France in 1798.",
             "I've almost done it! The collar is half deactivated, but to blow it up DEFINITELY, I still have to do the ultimate test: The Dart Shot",
             "Yippee! I did it! Thank you for helping me!!! Now I'm going back to my life as a heroic pigeon! Maybe one day we'll meet up again for a new adventure... In the meantime, stay smart like a pigeon!"
@@ -180,6 +180,7 @@
         let totalDistance = 0;
         let remainingDistance = 0;
         let currentHeading = 0;
+        let currentDestination = null;
 
         // Coordonnées des points d'intérêt
         const pointsOfInterest = {
@@ -293,29 +294,30 @@
                     radius: accuracy
                 }).addTo(map);
                 
-                // Calculer l'itinéraire initial
-                calculateRoute(userCoords);
+                // Calculer l'itinéraire initial vers la destination actuelle
+                const destination = currentDestination ? currentDestination.coords : pointsOfInterest.mirrorDoor.coords;
+                calculateRoute(userCoords, destination);
             } else {
                 userMarker.setLatLng(userCoords);
                 accuracyCircle.setLatLng(userCoords).setRadius(accuracy);
             }
             
             // Mettre à jour la distance
-            updateDistance(userCoords);
+            updateDistance(userCoords, currentDestination ? currentDestination.coords : pointsOfInterest.mirrorDoor.coords);
             
             // Recentrer légèrement la carte si nécessaire
             if (!isMapOpen) {
+                const destination = currentDestination ? currentDestination.coords : pointsOfInterest.mirrorDoor.coords;
                 const newCenter = L.latLng(
-                    (userCoords[0] + pointsOfInterest.mirrorDoor.coords[0]) / 2,
-                    (userCoords[1] + pointsOfInterest.mirrorDoor.coords[1]) / 2
+                    (userCoords[0] + destination[0]) / 2,
+                    (userCoords[1] + destination[1]) / 2
                 );
                 map.setView(newCenter);
             }
         }
         
-        function updateDistance(userCoords) {
-            const destination = pointsOfInterest.mirrorDoor.coords;
-            const distance = map.distance(userCoords, destination);
+        function updateDistance(userCoords, destinationCoords) {
+            const distance = map.distance(userCoords, destinationCoords);
             remainingDistance = distance;
             
             // Mettre à jour l'affichage de la distance
@@ -357,7 +359,7 @@
             }
         }
         
-        function calculateRoute(startCoords) {
+        function calculateRoute(startCoords, endCoords = pointsOfInterest.mirrorDoor.coords) {
             if (routingControl) {
                 map.removeControl(routingControl);
             }
@@ -366,7 +368,7 @@
             routingControl = L.Routing.control({
                 waypoints: [
                     L.latLng(startCoords[0], startCoords[1]),
-                    L.latLng(pointsOfInterest.mirrorDoor.coords[0], pointsOfInterest.mirrorDoor.coords[1])
+                    L.latLng(endCoords[0], endCoords[1])
                 ],
                 routeWhileDragging: false,
                 showAlternatives: false,
@@ -393,7 +395,7 @@
                     updateInstructionPanel(instructions, 0);
                     
                     // Vérifier périodiquement la position
-                    setInterval(() => checkProgress(userMarker.getLatLng(), instructions), 3000);
+                    setInterval(() => checkProgress(userMarker.getLatLng(), instructions, endCoords), 3000);
                 }
             });
         }
@@ -428,7 +430,7 @@
             }
         }
         
-        function checkProgress(currentPos, instructions) {
+        function checkProgress(currentPos, instructions, destinationCoords) {
             if (!instructions || instructions.length === 0) return;
             
             // Trouver l'étape la plus proche
@@ -449,8 +451,7 @@
             }
             
             // Vérifier si l'utilisateur est arrivé à destination
-            const destination = pointsOfInterest.mirrorDoor.coords;
-            const destinationDistance = map.distance(currentPos, destination);
+            const destinationDistance = map.distance(currentPos, destinationCoords);
             if (destinationDistance < 20) { // 20m pour considérer arrivé
                 document.getElementById('distance-indicator').textContent = "Vous êtes arrivé!";
                 document.getElementById('progress-bar').style.width = "100%";
@@ -495,6 +496,32 @@
             clearTimeout(typingTimeout);
         }
         
+        function showMapWithDestination(destinationKey) {
+            currentDestination = pointsOfInterest[destinationKey];
+            isMapOpen = true;
+            document.getElementById('map-container').style.display = 'flex';
+            
+            if (!map) {
+                initMap();
+            }
+            
+            // Recentrer sur la destination
+            map.setView(currentDestination.coords, 18);
+            
+            // Si on a une position utilisateur, calculer l'itinéraire
+            if (userMarker) {
+                calculateRoute(userMarker.getLatLng(), currentDestination.coords);
+            } else {
+                // Sinon, montrer juste la destination
+                if (routingControl) {
+                    map.removeControl(routingControl);
+                    routingControl = null;
+                }
+            }
+            
+            clearTimeout(typingTimeout);
+        }
+        
         function hideMap() {
             isMapOpen = false;
             document.getElementById('map-container').style.display = 'none';
@@ -522,7 +549,31 @@
             isTyping = true;
             if (phraseIndex < phrases.length) {
                 if (charIndex < phrases[phraseIndex].length) {
-                    if (phraseIndex === 0) {
+                    // Gestion spéciale pour les phrases avec liens
+                    if ([3, 6, 8].includes(phraseIndex)) {
+                        const fullText = phrases[phraseIndex];
+                        const linkStart = fullText.indexOf("<span");
+                        const linkEnd = fullText.indexOf("</span>") + 7;
+                        
+                        if (charIndex < linkStart) {
+                            dialogueElement.innerHTML = fullText.substring(0, charIndex + 1);
+                            charIndex++;
+                        } else if (charIndex < linkEnd) {
+                            if (charIndex === linkStart) {
+                                dialogueElement.innerHTML = fullText.substring(0, linkStart) + 
+                                    fullText.substring(linkStart, charIndex + 1);
+                            } else {
+                                dialogueElement.innerHTML = fullText.substring(0, linkStart) + 
+                                    fullText.substring(linkStart, charIndex + 1) + "</span>" + 
+                                    fullText.substring(linkEnd);
+                            }
+                            charIndex++;
+                        } else {
+                            dialogueElement.innerHTML = fullText.substring(0, charIndex + 1);
+                            charIndex++;
+                        }
+                    } else if (phraseIndex === 0) {
+                        // Gestion spéciale pour la première phrase
                         const baseText = "Before I tell you my story, come and see me at the ";
                         const linkText = "mirror door";
                         
@@ -546,13 +597,15 @@
                             }
                         }
                     } else {
+                        // Texte normal sans liens
                         dialogueElement.innerHTML = phrases[phraseIndex].substring(0, charIndex + 1);
                         charIndex++;
                     }
                     
-                    typingTimeout = setTimeout(typeWriter, 30); // Vitesse de frappe légèrement augmentée
+                    typingTimeout = setTimeout(typeWriter, 30);
                 } else {
                     isTyping = false;
+                    // Ajouter les écouteurs d'événements pour les liens
                     if (phraseIndex === 0) {
                         const link = document.getElementById('mirror-door-link');
                         if (link) {
@@ -561,6 +614,15 @@
                                 showMap();
                             });
                         }
+                    } else if ([3, 6, 8].includes(phraseIndex)) {
+                        const links = dialogueElement.querySelectorAll('.dialogue-link');
+                        links.forEach(link => {
+                            link.addEventListener('click', function(e) {
+                                e.preventDefault();
+                                const destination = this.getAttribute('data-destination');
+                                showMapWithDestination(destination);
+                            });
+                        });
                     }
                 }
             }
@@ -581,6 +643,16 @@
                             showMap();
                         });
                     }
+                } else if ([3, 6, 8].includes(phraseIndex)) {
+                    dialogueElement.innerHTML = phrases[phraseIndex];
+                    const links = dialogueElement.querySelectorAll('.dialogue-link');
+                    links.forEach(link => {
+                        link.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            const destination = this.getAttribute('data-destination');
+                            showMapWithDestination(destination);
+                        });
+                    });
                 } else {
                     dialogueElement.innerHTML = phrases[phraseIndex];
                 }
