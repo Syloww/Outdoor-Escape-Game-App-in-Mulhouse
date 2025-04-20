@@ -13,7 +13,42 @@ body {
     padding: 30px;
     background-color: rgba(0, 0, 0, 0);
     cursor: pointer;
-    z-index: 100;
+    z-index: 100000;
+}
+.tuto {
+    position: fixed;
+    inset: 0; 
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 10000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.tuto-contenu {
+    background: white;
+    color: black;
+    padding: 30px;
+    border-radius: 15px;
+    text-align: center;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+    max-width: 90%;
+    font-family: sans-serif;
+}
+
+.tuto h1 {
+    margin-bottom: 10px;
+    font-size: 2rem;
+}
+
+.tuto p {
+    font-size: 1.2rem;
+}
+
+
+.cacher{
+    display: none;
 }
 #gameContainer {
     position: relative;

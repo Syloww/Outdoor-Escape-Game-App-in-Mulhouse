@@ -28,6 +28,52 @@
             -webkit-tap-highlight-color: transparent;
         }
 
+        #tutobouton {
+            position: fixed;
+            bottom: 0;
+            right: 0;
+            padding: 30px;
+            background-color: rgba(0, 0, 0, 0);
+            cursor: pointer;
+            z-index: 10000000000;
+        }
+
+        .tuto {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 10000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .tuto-contenu {
+            background: white;
+            color: black;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+            max-width: 90%;
+            font-family: sans-serif;
+        }
+
+        .tuto h1 {
+            margin-bottom: 10px;
+            font-size: 2rem;
+        }
+
+        .tuto p {
+            font-size: 1.2rem;
+        }
+
+
+        .cacher {
+            display: none;
+        }
+
         .background-container {
             position: absolute;
             top: 0;
@@ -562,6 +608,20 @@
 </head>
 
 <body>
+    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="#FFF" class="bi bi-patch-question-fill"
+        viewBox="0 0 16 16" id="tutobouton">
+        <path
+            d="M5.933.87a2.89 2.89 0 0 1 4.134 0l.622.638.89-.011a2.89 2.89 0 0 1 2.924 2.924l-.01.89.636.622a2.89 2.89 0 0 1 0 4.134l-.637.622.011.89a2.89 2.89 0 0 1-2.924 2.924l-.89-.01-.622.636a2.89 2.89 0 0 1-4.134 0l-.622-.637-.89.011a2.89 2.89 0 0 1-2.924-2.924l.01-.89-.636-.622a2.89 2.89 0 0 1 0-4.134l.637-.622-.011-.89a2.89 2.89 0 0 1 2.924-2.924l.89.01zM7.002 11a1 1 0 1 0 2 0 1 1 0 0 0-2 0m1.602-2.027c.04-.534.198-.815.846-1.26.674-.475 1.05-1.09 1.05-1.986 0-1.325-.92-2.227-2.262-2.227-1.02 0-1.792.492-2.1 1.29A1.7 1.7 0 0 0 6 5.48c0 .393.203.64.545.64.272 0 .455-.147.564-.51.158-.592.525-.915 1.074-.915.61 0 1.03.446 1.03 1.084 0 .563-.208.885-.822 1.325-.619.433-.926.914-.926 1.64v.111c0 .428.208.745.585.745.336 0 .504-.24.554-.627" />
+    </svg>
+    <section class="tuto cacher">
+        <div class="tuto-contenu">
+            <h1>Tuto</h1>
+            <p>Visez la cible en inclinant le téléphone</p>
+            <p>En fonction de l'endroit toucher le score diminue ou augmente.</p>
+            <p>Bon jeu !</p>
+        </div>
+    </section>
+
     <div class="background-container">
         <picture>
             <source media="(max-width: 1024px)" srcset="
@@ -685,489 +745,497 @@
     </div>
 
     <!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jeu de précision - Remplissage de verre</title>
-    <style>
-        /* Vos styles existants... */
-    </style>
-</head>
-<body>
-    <!-- Votre HTML existant... -->
+    <html lang="fr">
 
-    <script>
-        // Éléments du DOM
-        const sourceBottle = document.getElementById('sourceBottle');
-        const targetGlass = document.getElementById('targetGlass');
-        const sourceBeer = document.getElementById('sourceBeer');
-        const targetBeer = document.getElementById('targetBeer');
-        const targetLine = document.getElementById('targetLine');
-        const targetRange = document.getElementById('targetRange');
-        const levelDisplay = document.getElementById('level');
-        const scoreDisplay = document.getElementById('score');
-        const targetDisplay = document.getElementById('target');
-        const restartBtn = document.getElementById('restartBtn');
-        const resetBtn = document.getElementById('resetBtn');
-        const levelCompleteScreen = document.querySelector('.level-complete');
-        const levelFailScreen = document.querySelector('.level-fail');
-        const finalScoreDisplay = document.getElementById('finalScore');
-        const precisionValue = document.getElementById('precisionValue');
-        const precisionFill = document.getElementById('precisionFill');
-        const continueBtn = document.getElementById('continueBtn');
-        const retryBtn = document.getElementById('retryBtn');
-        const targetLimitDisplay = document.getElementById('targetLimit');
-        const actualFillDisplay = document.getElementById('actualFill');
-        const tutorialScreen = document.querySelector('.tutorial');
-        const startBtn = document.getElementById('startBtn');
-        const validateBtn = document.getElementById('validateBtn');
-        const tiltHandle = document.querySelector('.tilt-handle');
-        const progressBar = document.getElementById('progressBar');
-        const gameOverScreen = document.querySelector('.game-over');
-        const finalTotalScore = document.getElementById('finalTotalScore');
-        const totalLevelsDisplay = document.getElementById('totalLevels');
-        const newGameBtn = document.getElementById('newGameBtn');
-        const pointsLostDisplay = document.getElementById('pointsLost');
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Jeu de précision - Remplissage de verre</title>
+        <style>
+            /* Vos styles existants... */
+        </style>
+    </head>
 
-        // Variables du jeu
-        let currentLevel = 1;
-        let score = 0;
-        let totalScore = 0;
-        let targetPercentage = 0;
-        let targetTolerance = 15;
-        let isPouring = false;
-        let gameActive = false;
-        let currentGamma = 0;
-        let gameOver = false;
-        let lastBeerHeight = 0;
-        const WINNING_SCORE = 1000;
-        let lastPourTime = 0;
-        const POUR_RATE_BASE = 0.1;
-        const POUR_RATE_MULTIPLIER = 0.02;
+    <body>
+        <!-- Votre HTML existant... -->
 
-        // Audio context et variables pour le son
-        let audioContext;
-        let audioBuffer;
-        let sourceNode;
-        let gainNode;
-        let isSoundPlaying = false;
-        let audioInitialized = false;
 
-        // Initialiser l'audio context après une interaction utilisateur
-        function initAudio() {
-            if (audioInitialized) return;
+        <script>
+            document.querySelector("#tutobouton").addEventListener("click", function () {
+                document.querySelector(".tuto").classList.toggle("cacher");
+            });
+        </script>
+        <script>
+            // Éléments du DOM
+            const sourceBottle = document.getElementById('sourceBottle');
+            const targetGlass = document.getElementById('targetGlass');
+            const sourceBeer = document.getElementById('sourceBeer');
+            const targetBeer = document.getElementById('targetBeer');
+            const targetLine = document.getElementById('targetLine');
+            const targetRange = document.getElementById('targetRange');
+            const levelDisplay = document.getElementById('level');
+            const scoreDisplay = document.getElementById('score');
+            const targetDisplay = document.getElementById('target');
+            const restartBtn = document.getElementById('restartBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            const levelCompleteScreen = document.querySelector('.level-complete');
+            const levelFailScreen = document.querySelector('.level-fail');
+            const finalScoreDisplay = document.getElementById('finalScore');
+            const precisionValue = document.getElementById('precisionValue');
+            const precisionFill = document.getElementById('precisionFill');
+            const continueBtn = document.getElementById('continueBtn');
+            const retryBtn = document.getElementById('retryBtn');
+            const targetLimitDisplay = document.getElementById('targetLimit');
+            const actualFillDisplay = document.getElementById('actualFill');
+            const tutorialScreen = document.querySelector('.tutorial');
+            const startBtn = document.getElementById('startBtn');
+            const validateBtn = document.getElementById('validateBtn');
+            const tiltHandle = document.querySelector('.tilt-handle');
+            const progressBar = document.getElementById('progressBar');
+            const gameOverScreen = document.querySelector('.game-over');
+            const finalTotalScore = document.getElementById('finalTotalScore');
+            const totalLevelsDisplay = document.getElementById('totalLevels');
+            const newGameBtn = document.getElementById('newGameBtn');
+            const pointsLostDisplay = document.getElementById('pointsLost');
 
-            try {
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                
-                // Charger le son du verre qui se remplit
-                fetch('son/sonEau.mp4')
-                    .then(response => response.arrayBuffer())
-                    .then(arrayBuffer => audioContext.decodeAudioData(arrayBuffer))
-                    .then(decodedAudio => {
-                        audioBuffer = decodedAudio;
-                        audioInitialized = true;
-                        
-                        // Configurer le gain node
-                        gainNode = audioContext.createGain();
-                        gainNode.gain.value = 0;
-                        gainNode.connect(audioContext.destination);
-                    })
-                    .catch(error => {
-                        console.error("Erreur de chargement audio:", error);
-                    });
-            } catch (e) {
-                console.error("Erreur d'initialisation audio:", e);
-            }
-        }
+            // Variables du jeu
+            let currentLevel = 1;
+            let score = 0;
+            let totalScore = 0;
+            let targetPercentage = 0;
+            let targetTolerance = 15;
+            let isPouring = false;
+            let gameActive = false;
+            let currentGamma = 0;
+            let gameOver = false;
+            let lastBeerHeight = 0;
+            const WINNING_SCORE = 1000;
+            let lastPourTime = 0;
+            const POUR_RATE_BASE = 0.1;
+            const POUR_RATE_MULTIPLIER = 0.02;
 
-        // Mettre à jour le son en fonction du niveau de remplissage
-        function updateSound(currentBeerPercentage) {
-            if (!audioInitialized || !audioContext || !audioBuffer || !gainNode) return;
+            // Audio context et variables pour le son
+            let audioContext;
+            let audioBuffer;
+            let sourceNode;
+            let gainNode;
+            let isSoundPlaying = false;
+            let audioInitialized = false;
 
-            // Calculer la distance à la cible
-            const targetHeight = targetGlass.offsetHeight * (targetPercentage / 100);
-            const currentHeight = targetGlass.offsetHeight * (currentBeerPercentage / 100);
-            const distanceToTarget = Math.abs(currentHeight - targetHeight);
-            const maxDistance = targetGlass.offsetHeight * 0.5;
+            // Initialiser l'audio context après une interaction utilisateur
+            function initAudio() {
+                if (audioInitialized) return;
 
-            // Normaliser la distance (0 = très loin, 1 = très proche)
-            const normalizedProximity = 1 - Math.min(1, distanceToTarget / maxDistance);
+                try {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
-            // Si on est en train de verser et que le son n'est pas déjà en cours
-            if (isPouring && !isSoundPlaying) {
-                sourceNode = audioContext.createBufferSource();
-                sourceNode.buffer = audioBuffer;
-                sourceNode.loop = true;
-                sourceNode.connect(gainNode);
-                sourceNode.start();
-                isSoundPlaying = true;
-            }
+                    // Charger le son du verre qui se remplit
+                    fetch('son/sonEau.mp4')
+                        .then(response => response.arrayBuffer())
+                        .then(arrayBuffer => audioContext.decodeAudioData(arrayBuffer))
+                        .then(decodedAudio => {
+                            audioBuffer = decodedAudio;
+                            audioInitialized = true;
 
-            // Ajuster le volume en fonction de la proximité avec la cible
-            const minVolume = 0.1;
-            const maxVolume = 0.8;
-            gainNode.gain.value = minVolume + (maxVolume - minVolume) * normalizedProximity;
-
-            // Ajuster la vitesse de lecture en fonction de l'inclinaison
-            if (sourceNode) {
-                const minPlaybackRate = 0.8;
-                const maxPlaybackRate = 1.5;
-                sourceNode.playbackRate.value = minPlaybackRate + (maxPlaybackRate - minPlaybackRate) * (currentGamma / 90);
-            }
-        }
-
-        // Arrêter le son
-        function stopSound() {
-            if (sourceNode) {
-                sourceNode.stop();
-                isSoundPlaying = false;
-            }
-            if (gainNode) {
-                gainNode.gain.value = 0;
-            }
-        }
-
-        // Initialiser le jeu
-        function initGame() {
-            currentLevel = 1;
-            score = 0;
-            totalScore = 0;
-            updateDisplay();
-            updateProgressBar();
-            setupLevel();
-            tutorialScreen.style.display = 'flex';
-            gameOverScreen.style.display = 'none';
-            levelCompleteScreen.style.display = 'none';
-            levelFailScreen.style.display = 'none';
-
-            setInterval(() => {
-                if (gameActive && parseFloat(targetBeer.style.height) > 10) {
-                    createBeerBubbles(targetBeer);
+                            // Configurer le gain node
+                            gainNode = audioContext.createGain();
+                            gainNode.gain.value = 0;
+                            gainNode.connect(audioContext.destination);
+                        })
+                        .catch(error => {
+                            console.error("Erreur de chargement audio:", error);
+                        });
+                } catch (e) {
+                    console.error("Erreur d'initialisation audio:", e);
                 }
-                if (gameActive && parseFloat(sourceBeer.style.height) > 10) {
-                    createBeerBubbles(sourceBeer);
-                }
-            }, 1000);
-        }
-
-        // Créer des bulles de bière
-        function createBeerBubbles(container) {
-            const bubbleCount = Math.floor(Math.random() * 3) + 2;
-
-            for (let i = 0; i < bubbleCount; i++) {
-                const bubble = document.createElement('div');
-                bubble.className = 'beer-bubble';
-
-                const leftPos = Math.random() * 90 + 5;
-                const size = Math.random() * 6 + 3;
-
-                bubble.style.width = `${size}px`;
-                bubble.style.height = `${size}px`;
-                bubble.style.left = `${leftPos}%`;
-                bubble.style.bottom = '0';
-                bubble.style.animationDuration = `${Math.random() * 2 + 1.5}s`;
-                bubble.style.animationDelay = `${Math.random() * 1.5}s`;
-
-                container.appendChild(bubble);
-
-                setTimeout(() => {
-                    bubble.remove();
-                }, 3500);
             }
-        }
 
-        // Configuration du niveau
-        function setupLevel() {
-            gameOver = false;
-            targetPercentage = 30 + Math.floor(Math.random() * 50);
-            targetDisplay.textContent = targetPercentage + '%';
-            targetLimitDisplay.textContent = targetPercentage;
-            updateTargetPosition();
-            sourceBeer.style.height = '100%';
-            targetBeer.style.height = '0%';
-            sourceBottle.style.transform = 'translateX(-90%) rotate(0deg)';
-            gameActive = true;
-            lastBeerHeight = 0;
-            lastPourTime = 0;
-            stopSound();
-        }
+            // Mettre à jour le son en fonction du niveau de remplissage
+            function updateSound(currentBeerPercentage) {
+                if (!audioInitialized || !audioContext || !audioBuffer || !gainNode) return;
 
-        // Mettre à jour la position de la cible
-        function updateTargetPosition() {
-            const glassHeight = targetGlass.offsetHeight;
-            const targetPosition = glassHeight * (targetPercentage / 100);
-            const toleranceHeight = glassHeight * (targetTolerance / 100);
+                // Calculer la distance à la cible
+                const targetHeight = targetGlass.offsetHeight * (targetPercentage / 100);
+                const currentHeight = targetGlass.offsetHeight * (currentBeerPercentage / 100);
+                const distanceToTarget = Math.abs(currentHeight - targetHeight);
+                const maxDistance = targetGlass.offsetHeight * 0.5;
 
-            targetLine.style.bottom = `${targetPosition}px`;
-            targetRange.style.bottom = `${targetPosition - toleranceHeight / 2}px`;
-            targetRange.style.height = `${toleranceHeight}px`;
-        }
+                // Normaliser la distance (0 = très loin, 1 = très proche)
+                const normalizedProximity = 1 - Math.min(1, distanceToTarget / maxDistance);
 
-        // Mise à jour de l'affichage
-        function updateDisplay() {
-            levelDisplay.textContent = currentLevel;
-            scoreDisplay.textContent = score;
-        }
-
-        // Mettre à jour la barre de progression
-        function updateProgressBar() {
-            const progress = Math.min(100, (totalScore / WINNING_SCORE) * 100);
-            progressBar.style.width = `${progress}%`;
-            progressBar.textContent = `${totalScore}/${WINNING_SCORE}`;
-        }
-
-        // Gestion de l'inclinaison
-        function handleOrientation(event) {
-            if (!gameActive || gameOver) return;
-
-            currentGamma = event.gamma;
-            updateTiltIndicator(currentGamma);
-
-            if (currentGamma > 10 && currentGamma < 90 && parseFloat(sourceBeer.style.height) > 0) {
-                if (!isPouring) {
-                    isPouring = true;
-                    lastPourTime = Date.now();
-                    initAudio();
+                // Si on est en train de verser et que le son n'est pas déjà en cours
+                if (isPouring && !isSoundPlaying) {
+                    sourceNode = audioContext.createBufferSource();
+                    sourceNode.buffer = audioBuffer;
+                    sourceNode.loop = true;
+                    sourceNode.connect(gainNode);
+                    sourceNode.start();
+                    isSoundPlaying = true;
                 }
 
-                const bottleAngle = Math.min(60, currentGamma);
-                sourceBottle.style.transform = `translateX(-90%) rotate(${bottleAngle}deg)`;
+                // Ajuster le volume en fonction de la proximité avec la cible
+                const minVolume = 0.1;
+                const maxVolume = 0.8;
+                gainNode.gain.value = minVolume + (maxVolume - minVolume) * normalizedProximity;
 
-                const now = Date.now();
-                const deltaTime = now - lastPourTime;
-                lastPourTime = now;
+                // Ajuster la vitesse de lecture en fonction de l'inclinaison
+                if (sourceNode) {
+                    const minPlaybackRate = 0.8;
+                    const maxPlaybackRate = 1.5;
+                    sourceNode.playbackRate.value = minPlaybackRate + (maxPlaybackRate - minPlaybackRate) * (currentGamma / 90);
+                }
+            }
 
-                const inclinationFactor = Math.pow(currentGamma / 90, 2);
-                const timeFactor = Math.min(1, deltaTime / 1000);
-                const transferRate = POUR_RATE_BASE + (POUR_RATE_MULTIPLIER * inclinationFactor * timeFactor * currentGamma);
+            // Arrêter le son
+            function stopSound() {
+                if (sourceNode) {
+                    sourceNode.stop();
+                    isSoundPlaying = false;
+                }
+                if (gainNode) {
+                    gainNode.gain.value = 0;
+                }
+            }
 
-                transferBeer(transferRate);
-            } else {
-                if (isPouring) {
+            // Initialiser le jeu
+            function initGame() {
+                currentLevel = 1;
+                score = 0;
+                totalScore = 0;
+                updateDisplay();
+                updateProgressBar();
+                setupLevel();
+                tutorialScreen.style.display = 'flex';
+                gameOverScreen.style.display = 'none';
+                levelCompleteScreen.style.display = 'none';
+                levelFailScreen.style.display = 'none';
+
+                setInterval(() => {
+                    if (gameActive && parseFloat(targetBeer.style.height) > 10) {
+                        createBeerBubbles(targetBeer);
+                    }
+                    if (gameActive && parseFloat(sourceBeer.style.height) > 10) {
+                        createBeerBubbles(sourceBeer);
+                    }
+                }, 1000);
+            }
+
+            // Créer des bulles de bière
+            function createBeerBubbles(container) {
+                const bubbleCount = Math.floor(Math.random() * 3) + 2;
+
+                for (let i = 0; i < bubbleCount; i++) {
+                    const bubble = document.createElement('div');
+                    bubble.className = 'beer-bubble';
+
+                    const leftPos = Math.random() * 90 + 5;
+                    const size = Math.random() * 6 + 3;
+
+                    bubble.style.width = `${size}px`;
+                    bubble.style.height = `${size}px`;
+                    bubble.style.left = `${leftPos}%`;
+                    bubble.style.bottom = '0';
+                    bubble.style.animationDuration = `${Math.random() * 2 + 1.5}s`;
+                    bubble.style.animationDelay = `${Math.random() * 1.5}s`;
+
+                    container.appendChild(bubble);
+
+                    setTimeout(() => {
+                        bubble.remove();
+                    }, 3500);
+                }
+            }
+
+            // Configuration du niveau
+            function setupLevel() {
+                gameOver = false;
+                targetPercentage = 30 + Math.floor(Math.random() * 50);
+                targetDisplay.textContent = targetPercentage + '%';
+                targetLimitDisplay.textContent = targetPercentage;
+                updateTargetPosition();
+                sourceBeer.style.height = '100%';
+                targetBeer.style.height = '0%';
+                sourceBottle.style.transform = 'translateX(-90%) rotate(0deg)';
+                gameActive = true;
+                lastBeerHeight = 0;
+                lastPourTime = 0;
+                stopSound();
+            }
+
+            // Mettre à jour la position de la cible
+            function updateTargetPosition() {
+                const glassHeight = targetGlass.offsetHeight;
+                const targetPosition = glassHeight * (targetPercentage / 100);
+                const toleranceHeight = glassHeight * (targetTolerance / 100);
+
+                targetLine.style.bottom = `${targetPosition}px`;
+                targetRange.style.bottom = `${targetPosition - toleranceHeight / 2}px`;
+                targetRange.style.height = `${toleranceHeight}px`;
+            }
+
+            // Mise à jour de l'affichage
+            function updateDisplay() {
+                levelDisplay.textContent = currentLevel;
+                scoreDisplay.textContent = score;
+            }
+
+            // Mettre à jour la barre de progression
+            function updateProgressBar() {
+                const progress = Math.min(100, (totalScore / WINNING_SCORE) * 100);
+                progressBar.style.width = `${progress}%`;
+                progressBar.textContent = `${totalScore}/${WINNING_SCORE}`;
+            }
+
+            // Gestion de l'inclinaison
+            function handleOrientation(event) {
+                if (!gameActive || gameOver) return;
+
+                currentGamma = event.gamma;
+                updateTiltIndicator(currentGamma);
+
+                if (currentGamma > 10 && currentGamma < 90 && parseFloat(sourceBeer.style.height) > 0) {
+                    if (!isPouring) {
+                        isPouring = true;
+                        lastPourTime = Date.now();
+                        initAudio();
+                    }
+
+                    const bottleAngle = Math.min(60, currentGamma);
+                    sourceBottle.style.transform = `translateX(-90%) rotate(${bottleAngle}deg)`;
+
+                    const now = Date.now();
+                    const deltaTime = now - lastPourTime;
+                    lastPourTime = now;
+
+                    const inclinationFactor = Math.pow(currentGamma / 90, 2);
+                    const timeFactor = Math.min(1, deltaTime / 1000);
+                    const transferRate = POUR_RATE_BASE + (POUR_RATE_MULTIPLIER * inclinationFactor * timeFactor * currentGamma);
+
+                    transferBeer(transferRate);
+                } else {
+                    if (isPouring) {
+                        isPouring = false;
+                        stopSound();
+                    }
+                    sourceBottle.style.transform = 'translateX(-90%) rotate(0deg)';
+                }
+            }
+
+            // Mettre à jour l'indicateur de tilt
+            function updateTiltIndicator(gamma) {
+                const tiltX = Math.min(90, Math.max(0, gamma)) / 90 * 100;
+                tiltHandle.style.transform = `translate(calc(-50% + ${tiltX}px), -50%)`;
+            }
+
+            // Transférer la bière
+            function transferBeer(rate) {
+                if (gameOver) return;
+
+                const currentSourceHeight = parseFloat(sourceBeer.style.height);
+                let currentTargetHeight = parseFloat(targetBeer.style.height);
+
+                if (currentSourceHeight <= 0) {
                     isPouring = false;
                     stopSound();
+                    return;
                 }
-                sourceBottle.style.transform = 'translateX(-90%) rotate(0deg)';
-            }
-        }
 
-        // Mettre à jour l'indicateur de tilt
-        function updateTiltIndicator(gamma) {
-            const tiltX = Math.min(90, Math.max(0, gamma)) / 90 * 100;
-            tiltHandle.style.transform = `translate(calc(-50% + ${tiltX}px), -50%)`;
-        }
+                const adjustedRate = rate * (1 - (currentLevel * 0.00000001));
+                sourceBeer.style.height = `${Math.max(0, currentSourceHeight - adjustedRate)}%`;
+                currentTargetHeight = Math.min(100, currentTargetHeight + adjustedRate);
 
-        // Transférer la bière
-        function transferBeer(rate) {
-            if (gameOver) return;
+                targetBeer.style.height = `${currentTargetHeight}%`;
+                updateSound(currentTargetHeight);
 
-            const currentSourceHeight = parseFloat(sourceBeer.style.height);
-            let currentTargetHeight = parseFloat(targetBeer.style.height);
+                if (Math.random() < 0.3) {
+                    createBeerBubbles(targetBeer);
+                }
 
-            if (currentSourceHeight <= 0) {
-                isPouring = false;
-                stopSound();
-                return;
-            }
-
-            const adjustedRate = rate * (1 - (currentLevel * 0.00000001));
-            sourceBeer.style.height = `${Math.max(0, currentSourceHeight - adjustedRate)}%`;
-            currentTargetHeight = Math.min(100, currentTargetHeight + adjustedRate);
-
-            targetBeer.style.height = `${currentTargetHeight}%`;
-            updateSound(currentTargetHeight);
-
-            if (Math.random() < 0.3) {
-                createBeerBubbles(targetBeer);
+                const glassHeight = targetGlass.offsetHeight;
+                if ((currentTargetHeight / 100) * glassHeight >
+                    (targetPercentage / 100) * glassHeight + (targetTolerance / 100) * glassHeight) {
+                    gameOver = true;
+                    isPouring = false;
+                    stopSound();
+                    showFailScreen(currentTargetHeight);
+                }
             }
 
-            const glassHeight = targetGlass.offsetHeight;
-            if ((currentTargetHeight / 100) * glassHeight >
-                (targetPercentage / 100) * glassHeight + (targetTolerance / 100) * glassHeight) {
-                gameOver = true;
-                isPouring = false;
-                stopSound();
-                showFailScreen(currentTargetHeight);
-            }
-        }
+            // Afficher l'écran d'échec
+            function showFailScreen(finalHeight) {
+                const glassHeight = targetGlass.offsetHeight;
+                const targetHeight = glassHeight * (targetPercentage / 100);
+                const beerHeight = glassHeight * (finalHeight / 100);
+                const distance = Math.abs(beerHeight - targetHeight);
 
-        // Afficher l'écran d'échec
-        function showFailScreen(finalHeight) {
-            const glassHeight = targetGlass.offsetHeight;
-            const targetHeight = glassHeight * (targetPercentage / 100);
-            const beerHeight = glassHeight * (finalHeight / 100);
-            const distance = Math.abs(beerHeight - targetHeight);
+                const maxDistance = glassHeight * 0.3;
+                const precision = Math.max(0, 100 - (distance / maxDistance * 100));
 
-            const maxDistance = glassHeight * 0.3;
-            const precision = Math.max(0, 100 - (distance / maxDistance * 100));
+                const lostPoints = 100;
+                totalScore = Math.max(0, totalScore - lostPoints);
+                updateProgressBar();
 
-            const lostPoints = 100;
-            totalScore = Math.max(0, totalScore - lostPoints);
-            updateProgressBar();
-
-            actualFillDisplay.textContent = finalHeight.toFixed(0);
-            document.getElementById('failPrecision').textContent = precision.toFixed(0);
-            pointsLostDisplay.textContent = lostPoints;
-            levelFailScreen.style.display = 'flex';
-            gameActive = false;
-        }
-
-        // Calculer le score
-        function calculateScore(currentBeerHeight) {
-            const glassHeight = targetGlass.offsetHeight;
-            const targetHeight = glassHeight * (targetPercentage / 100);
-            const beerHeight = glassHeight * (currentBeerHeight / 100);
-            const distance = Math.abs(beerHeight - targetHeight);
-
-            const maxDistance = glassHeight * 0.3;
-            let fillPrecision = Math.max(0, 100 - (distance / maxDistance * 100));
-
-            fillPrecision = Math.min(100, fillPrecision * 1.5);
-            const levelScore = Math.floor(fillPrecision * currentLevel * 1.2);
-
-            score += levelScore;
-            totalScore += levelScore;
-            updateDisplay();
-            updateProgressBar();
-
-            finalScoreDisplay.textContent = levelScore;
-            precisionValue.textContent = fillPrecision.toFixed(0);
-            precisionFill.style.width = `${fillPrecision}%`;
-
-            if (totalScore >= WINNING_SCORE) {
-                showWinScreen();
-            }
-        }
-
-        // Afficher l'écran de victoire
-        function showWinScreen() {
-            gameActive = false;
-            stopSound();
-            finalTotalScore.textContent = totalScore;
-            totalLevelsDisplay.textContent = currentLevel;
-            gameOverScreen.style.display = 'flex';
-        }
-
-        // Écouteurs d'événements
-        validateBtn.addEventListener('click', () => {
-            if (!gameActive || gameOver) return;
-
-            isPouring = false;
-            stopSound();
-            const currentBeerHeight = parseFloat(targetBeer.style.height);
-            const glassHeight = targetGlass.offsetHeight;
-            const targetHeight = glassHeight * (targetPercentage / 100);
-            const beerHeight = glassHeight * (currentBeerHeight / 100);
-
-            if (beerHeight > targetHeight + (glassHeight * (targetTolerance / 100))) {
-                gameOver = true;
-                showFailScreen(currentBeerHeight);
-            } else {
-                calculateScore(currentBeerHeight);
-                levelCompleteScreen.style.display = 'flex';
+                actualFillDisplay.textContent = finalHeight.toFixed(0);
+                document.getElementById('failPrecision').textContent = precision.toFixed(0);
+                pointsLostDisplay.textContent = lostPoints;
+                levelFailScreen.style.display = 'flex';
                 gameActive = false;
             }
-        });
 
-        // Recommencer le niveau
-        function restartLevel() {
-            setupLevel();
-            levelCompleteScreen.style.display = 'none';
-            levelFailScreen.style.display = 'none';
-        }
+            // Calculer le score
+            function calculateScore(currentBeerHeight) {
+                const glassHeight = targetGlass.offsetHeight;
+                const targetHeight = glassHeight * (targetPercentage / 100);
+                const beerHeight = glassHeight * (currentBeerHeight / 100);
+                const distance = Math.abs(beerHeight - targetHeight);
 
-        // Réinitialiser complètement le jeu
-        function resetGame() {
+                const maxDistance = glassHeight * 0.3;
+                let fillPrecision = Math.max(0, 100 - (distance / maxDistance * 100));
+
+                fillPrecision = Math.min(100, fillPrecision * 1.5);
+                const levelScore = Math.floor(fillPrecision * currentLevel * 1.2);
+
+                score += levelScore;
+                totalScore += levelScore;
+                updateDisplay();
+                updateProgressBar();
+
+                finalScoreDisplay.textContent = levelScore;
+                precisionValue.textContent = fillPrecision.toFixed(0);
+                precisionFill.style.width = `${fillPrecision}%`;
+
+                if (totalScore >= WINNING_SCORE) {
+                    showWinScreen();
+                }
+            }
+
+            // Afficher l'écran de victoire
+            function showWinScreen() {
+                gameActive = false;
+                stopSound();
+                finalTotalScore.textContent = totalScore;
+                totalLevelsDisplay.textContent = currentLevel;
+                gameOverScreen.style.display = 'flex';
+            }
+
+            // Écouteurs d'événements
+            validateBtn.addEventListener('click', () => {
+                if (!gameActive || gameOver) return;
+
+                isPouring = false;
+                stopSound();
+                const currentBeerHeight = parseFloat(targetBeer.style.height);
+                const glassHeight = targetGlass.offsetHeight;
+                const targetHeight = glassHeight * (targetPercentage / 100);
+                const beerHeight = glassHeight * (currentBeerHeight / 100);
+
+                if (beerHeight > targetHeight + (glassHeight * (targetTolerance / 100))) {
+                    gameOver = true;
+                    showFailScreen(currentBeerHeight);
+                } else {
+                    calculateScore(currentBeerHeight);
+                    levelCompleteScreen.style.display = 'flex';
+                    gameActive = false;
+                }
+            });
+
+            // Recommencer le niveau
+            function restartLevel() {
+                setupLevel();
+                levelCompleteScreen.style.display = 'none';
+                levelFailScreen.style.display = 'none';
+            }
+
+            // Réinitialiser complètement le jeu
+            function resetGame() {
+                initGame();
+            }
+
+            window.addEventListener('deviceorientation', handleOrientation);
+            restartBtn.addEventListener('click', restartLevel);
+            resetBtn.addEventListener('click', resetGame);
+            continueBtn.addEventListener('click', () => {
+                currentLevel++;
+                levelCompleteScreen.style.display = 'none';
+                setupLevel();
+            });
+            retryBtn.addEventListener('click', restartLevel);
+            startBtn.addEventListener('click', () => {
+                tutorialScreen.style.display = 'none';
+                gameActive = true;
+            });
+            newGameBtn.addEventListener('click', initGame);
+
+            // Redimensionnement de la fenêtre
+            window.addEventListener('resize', () => {
+                if (gameActive) {
+                    updateTargetPosition();
+                }
+            });
+
+            // Démarrer le jeu
             initGame();
-        }
 
-        window.addEventListener('deviceorientation', handleOrientation);
-        restartBtn.addEventListener('click', restartLevel);
-        resetBtn.addEventListener('click', resetGame);
-        continueBtn.addEventListener('click', () => {
-            currentLevel++;
-            levelCompleteScreen.style.display = 'none';
-            setupLevel();
-        });
-        retryBtn.addEventListener('click', restartLevel);
-        startBtn.addEventListener('click', () => {
-            tutorialScreen.style.display = 'none';
-            gameActive = true;
-        });
-        newGameBtn.addEventListener('click', initGame);
-
-        // Redimensionnement de la fenêtre
-        window.addEventListener('resize', () => {
-            if (gameActive) {
-                updateTargetPosition();
+            // Fallback pour les appareils sans capteur d'orientation
+            if (!window.DeviceOrientationEvent) {
+                alert("Désolé, ce jeu nécessite un appareil avec capteur d'orientation. Veuillez utiliser un smartphone ou une tablette.");
             }
-        });
 
-        // Démarrer le jeu
-        initGame();
+            // Contrôles alternatifs pour le développement sur ordinateur
+            let simulatedGamma = 0;
+            const maxSimulatedGamma = 60;
 
-        // Fallback pour les appareils sans capteur d'orientation
-        if (!window.DeviceOrientationEvent) {
-            alert("Désolé, ce jeu nécessite un appareil avec capteur d'orientation. Veuillez utiliser un smartphone ou une tablette.");
-        }
+            document.addEventListener('keydown', (e) => {
+                if (!gameActive || gameOver) return;
 
-        // Contrôles alternatifs pour le développement sur ordinateur
-        let simulatedGamma = 0;
-        const maxSimulatedGamma = 60;
+                if (e.key === 'ArrowRight') {
+                    simulatedGamma = Math.min(maxSimulatedGamma, simulatedGamma + 5);
+                    handleOrientation({ gamma: simulatedGamma });
+                }
+            });
 
-        document.addEventListener('keydown', (e) => {
-            if (!gameActive || gameOver) return;
+            document.addEventListener('keyup', (e) => {
+                if (e.key === 'ArrowRight') {
+                    simulatedGamma = 0;
+                    handleOrientation({ gamma: 0 });
+                }
+            });
 
-            if (e.key === 'ArrowRight') {
-                simulatedGamma = Math.min(maxSimulatedGamma, simulatedGamma + 5);
-                handleOrientation({ gamma: simulatedGamma });
+            // Empêcher le changement d'orientation
+            function lockOrientation() {
+                if (screen.orientation && screen.orientation.lock) {
+                    screen.orientation.lock('portrait').catch(function (error) {
+                        console.log('Orientation lock failed: ', error);
+                    });
+                } else if (screen.lockOrientation) {
+                    screen.lockOrientation('portrait');
+                } else if (screen.mozLockOrientation) {
+                    screen.mozLockOrientation('portrait');
+                } else if (screen.msLockOrientation) {
+                    screen.msLockOrientation('portrait');
+                }
             }
-        });
 
-        document.addEventListener('keyup', (e) => {
-            if (e.key === 'ArrowRight') {
-                simulatedGamma = 0;
-                handleOrientation({ gamma: 0 });
+            // Vérifier l'orientation au chargement
+            function checkOrientation() {
+                if (window.innerHeight < window.innerWidth) {
+                    document.querySelector('.landscape-warning').style.display = 'flex';
+                } else {
+                    document.querySelector('.landscape-warning').style.display = 'none';
+                }
             }
-        });
 
-        // Empêcher le changement d'orientation
-        function lockOrientation() {
-            if (screen.orientation && screen.orientation.lock) {
-                screen.orientation.lock('portrait').catch(function (error) {
-                    console.log('Orientation lock failed: ', error);
-                });
-            } else if (screen.lockOrientation) {
-                screen.lockOrientation('portrait');
-            } else if (screen.mozLockOrientation) {
-                screen.mozLockOrientation('portrait');
-            } else if (screen.msLockOrientation) {
-                screen.msLockOrientation('portrait');
-            }
-        }
+            // Vérifier l'orientation lors du changement
+            window.addEventListener('resize', checkOrientation);
+            window.addEventListener('orientationchange', checkOrientation);
 
-        // Vérifier l'orientation au chargement
-        function checkOrientation() {
-            if (window.innerHeight < window.innerWidth) {
-                document.querySelector('.landscape-warning').style.display = 'flex';
-            } else {
-                document.querySelector('.landscape-warning').style.display = 'none';
-            }
-        }
+            // Initialiser le verrouillage d'orientation
+            window.addEventListener('load', function () {
+                checkOrientation();
+                lockOrientation();
+            });
+        </script>
 
-        // Vérifier l'orientation lors du changement
-        window.addEventListener('resize', checkOrientation);
-        window.addEventListener('orientationchange', checkOrientation);
+    </body>
 
-        // Initialiser le verrouillage d'orientation
-        window.addEventListener('load', function () {
-            checkOrientation();
-            lockOrientation();
-        });
-    </script>
-
-</body>
-
-</html>
+    </html>
