@@ -140,28 +140,11 @@
             nextLevelDisplay.textContent = nextLevelThreshold;
             progressBar.style.width = `${(score / nextLevelThreshold) * 100}%`;
         }
+        // Dans la fonction checkLevelUp, ajouter :
         function checkLevelUp() {
             if (score >= nextLevelThreshold) {
-                // Vérifier si le score a atteint 100
-                if (score >= 100) {
-                    // Afficher un message de félicitations
-                    const victoryPopup = document.createElement('div');
-                    victoryPopup.className = 'victoryPopup';
-                    victoryPopup.innerHTML = '<h1>Félicitations !</h1><p>Vous avez atteint le score maximum !</p>';
-                    gameContainer.appendChild(victoryPopup);
-
-                    // Optionnel: désactiver les tirs
-                    canShoot = false;
-
-                    // Optionnel: rediriger après un délai
-                    setTimeout(() => {
-                        window.location.href = "index.html"; // ou une autre page
-                    }, 5000);
-                    return;
-                }
-
                 level++;
-                nextLevelThreshold = Math.min(100, Math.floor(nextLevelThreshold * 1.5)); // Ne pas dépasser 100
+                nextLevelThreshold = Math.floor(nextLevelThreshold * 1.5); // Augmentation progressive
                 updateLevelDisplay();
 
                 // Réduire légèrement la taille de la cible pour augmenter la difficulté
@@ -180,6 +163,19 @@
                 setTimeout(() => {
                     gameContainer.removeChild(levelUpPopup);
                 }, 1500);
+
+                // Vérifier si le score atteint 100 pour rediriger
+                if (score >= 100) {
+                    const victoryPopup = document.createElement('div');
+                    victoryPopup.className = 'victoryPopup';
+                    victoryPopup.textContent = 'Félicitations! Vous avez gagné!';
+                    gameContainer.appendChild(victoryPopup);
+
+                    setTimeout(() => {
+                        // Rediriger vers la page de fin ou une autre page
+                        window.location.href = "dialogue.html"; // ou une autre page de votre choix
+                    }, 3000);
+                }
             }
         }
 
