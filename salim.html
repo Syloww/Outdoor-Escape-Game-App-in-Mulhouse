@@ -140,7 +140,7 @@
             nextLevelDisplay.textContent = nextLevelThreshold;
             progressBar.style.width = `${(score / nextLevelThreshold) * 100}%`;
         }
-        // Dans la fonction checkLevelUp, ajouter :
+
         function checkLevelUp() {
             if (score >= nextLevelThreshold) {
                 level++;
@@ -172,8 +172,8 @@
                     gameContainer.appendChild(victoryPopup);
 
                     setTimeout(() => {
-                        // Rediriger vers la page de fin ou une autre page
-                        window.location.href = "dialogue.html"; // ou une autre page de votre choix
+                        // Rediriger vers la page de dialogue
+                        window.location.href = "dialogue.html";
                     }, 3000);
                 }
             }

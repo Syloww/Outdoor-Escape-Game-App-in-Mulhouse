@@ -213,7 +213,7 @@
                 icon: "beer"
             },
             placeReunion: {
-                coords: [47,74663, 7,3393],
+                coords: [47, 74663, 7, 3393],
                 name: "Place de la Réunion",
                 icon: "landmark"
             }
@@ -448,22 +448,16 @@
             if (minDistance < 30) { // 30m de seuil
                 updateInstructionPanel(instructions, closestInstruction);
             }
-
-            // Vérifier si l'utilisateur est arrivé à destination
-            const destinationDistance = map.distance(currentPos, destinationCoords);
-            if (destinationDistance < 20) { // 20m pour considérer arrivé
-                document.getElementById('distance-indicator').textContent = "Vous êtes arrivé!";
-                document.getElementById('progress-bar').style.width = "100%";
-
-                // Si c'est la Place de la Réunion, rediriger vers salim.html
-                if (currentDestination && currentDestination.name === "Place de la Réunion") {
-                    setTimeout(() => {
-                        hideMap();
-                        window.location.href = "salim.html";
-                    }, 2000);
-                }
-            }
         }
+
+        // Modifier le gestionnaire du bouton "j'y suis"
+        document.getElementById('close-map').addEventListener('click', function () {
+            if (currentDestination && currentDestination.name === "Place de la Réunion") {
+                window.location.href = "salim.html";
+            } else {
+                hideMap();
+            }
+        });
 
         function handleGeolocationError(error) {
             let message = "Erreur de géolocalisation : ";
