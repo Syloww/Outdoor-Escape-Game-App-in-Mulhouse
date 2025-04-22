@@ -238,20 +238,6 @@
                 position: 'topright'
             }).addTo(map);
 
-            // Ajouter tous les points d'intérêt avec des icônes personnalisées
-            Object.values(pointsOfInterest).forEach(poi => {
-                L.marker(poi.coords, {
-                    icon: L.AwesomeMarkers.icon({
-                        icon: poi.icon,
-                        markerColor: 'red',
-                        prefix: 'fa',
-                        extraClasses: 'fa-rotate-0'
-                    })
-                }).addTo(map)
-                    .bindPopup(`<b>${poi.name}</b>`)
-                    .openPopup();
-            });
-
             // Démarrer le suivi GPS
             startGPSTracking();
         }
@@ -385,8 +371,8 @@
                 ],
                 routeWhileDragging: false,
                 showAlternatives: false,
-                fitSelectedRoutes: false,
-                show: false,
+                fitSelectedRoutes: true,
+                show: true,
                 collapsible: true,
                 addWaypoints: false,
                 draggableWaypoints: false,
@@ -470,7 +456,7 @@
                 document.getElementById('progress-bar').style.width = "100%";
 
                 // Si c'est la Place de la Réunion, rediriger vers salim.html
-                if (currentDestination && currentDestination === pointsOfInterest.placeReunion) {
+                if (currentDestination && currentDestination.name === "Place de la Réunion") {
                     setTimeout(() => {
                         hideMap();
                         window.location.href = "salim.html";
@@ -526,7 +512,25 @@
                 initMap();
             }
 
-            // Recentrer sur la destination
+            // Supprimer tous les marqueurs existants sauf userMarker
+            map.eachLayer(layer => {
+                if (layer instanceof L.Marker && layer !== userMarker) {
+                    map.removeLayer(layer);
+                }
+            });
+
+            // Ajouter uniquement le marqueur de destination
+            L.marker(currentDestination.coords, {
+                icon: L.AwesomeMarkers.icon({
+                    icon: currentDestination.icon,
+                    markerColor: 'red',
+                    prefix: 'fa',
+                    extraClasses: 'fa-rotate-0'
+                })
+            }).addTo(map)
+                .bindPopup(`<b>${currentDestination.name}</b>`)
+                .openPopup();
+
             map.setView(currentDestination.coords, 18);
 
             // Si on a une position utilisateur, calculer l'itinéraire
