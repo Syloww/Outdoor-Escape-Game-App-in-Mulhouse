@@ -22,7 +22,7 @@
             <p>Bon jeu !</p>
         </div>
     </section>
-    
+
     <div id="gameContainer">
         <div id="background"></div>
         <div id="target"></div>
@@ -140,12 +140,28 @@
             nextLevelDisplay.textContent = nextLevelThreshold;
             progressBar.style.width = `${(score / nextLevelThreshold) * 100}%`;
         }
-
-        // Vérification du niveau
         function checkLevelUp() {
             if (score >= nextLevelThreshold) {
+                // Vérifier si le score a atteint 100
+                if (score >= 100) {
+                    // Afficher un message de félicitations
+                    const victoryPopup = document.createElement('div');
+                    victoryPopup.className = 'victoryPopup';
+                    victoryPopup.innerHTML = '<h1>Félicitations !</h1><p>Vous avez atteint le score maximum !</p>';
+                    gameContainer.appendChild(victoryPopup);
+
+                    // Optionnel: désactiver les tirs
+                    canShoot = false;
+
+                    // Optionnel: rediriger après un délai
+                    setTimeout(() => {
+                        window.location.href = "index.html"; // ou une autre page
+                    }, 5000);
+                    return;
+                }
+
                 level++;
-                nextLevelThreshold = Math.floor(nextLevelThreshold * 1.5); // Augmentation progressive
+                nextLevelThreshold = Math.min(100, Math.floor(nextLevelThreshold * 1.5)); // Ne pas dépasser 100
                 updateLevelDisplay();
 
                 // Réduire légèrement la taille de la cible pour augmenter la difficulté
