@@ -11,7 +11,8 @@
     <!-- Leaflet Routing Machine CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
     <!-- Leaflet.awesome-markers -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css" />
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css" />
     <style>
         #map-container {
             display: none;
@@ -26,6 +27,7 @@
             align-items: center;
             flex-direction: column;
         }
+
         #map {
             width: 95%;
             height: 75%;
@@ -33,6 +35,7 @@
             border-radius: 8px;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
         }
+
         #close-map {
             position: absolute;
             top: 20px;
@@ -48,10 +51,12 @@
             transition: all 0.3s;
             z-index: 900;
         }
+
         #close-map:hover {
             background: #ff6b81;
             transform: scale(1.05);
         }
+
         #instructions {
             width: 95%;
             height: 20%;
@@ -63,24 +68,28 @@
             border-radius: 8px;
             font-family: Arial, sans-serif;
         }
+
         .dialogue-link {
             color: #4a90e2;
             text-decoration: underline;
             cursor: pointer;
             font-weight: bold;
         }
+
         .instruction-step {
             margin-bottom: 8px;
             padding: 8px;
             border-bottom: 1px solid #eee;
             transition: all 0.3s;
         }
+
         .current-step {
             font-weight: bold;
             background-color: #e6f2ff;
             border-left: 4px solid #4a90e2;
             padding-left: 12px;
         }
+
         .distance-indicator {
             position: absolute;
             top: 20px;
@@ -92,6 +101,7 @@
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
             z-index: 1001;
         }
+
         .compass {
             position: absolute;
             top: 70px;
@@ -107,6 +117,7 @@
             align-items: center;
             font-size: 24px;
         }
+
         .progress-container {
             width: 100%;
             height: 5px;
@@ -115,6 +126,7 @@
             border-radius: 5px;
             overflow: hidden;
         }
+
         .progress-bar {
             height: 100%;
             background: #4a90e2;
@@ -149,7 +161,8 @@
     <!-- Leaflet Routing Machine JS -->
     <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
     <!-- Leaflet.awesome-markers -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.min.js"></script>
+    <script
+        src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.min.js"></script>
     <!-- Leaflet.Geolocation -->
     <script src="https://unpkg.com/leaflet.geolocation@1.0.4/dist/leaflet.geolocation.min.js"></script>
 
@@ -168,7 +181,7 @@
             "I've almost done it! The collar is half deactivated, but to blow it up DEFINITELY, I still have to do the ultimate test: The Dart Shot",
             "Yippee! I did it! Thank you for helping me!!! Now I'm going back to my life as a heroic pigeon! Maybe one day we'll meet up again for a new adventure... In the meantime, stay smart like a pigeon!"
         ];
-        
+
         const dialogueElement = document.getElementById('dialogue-text');
         let phraseIndex = 0;
         let charIndex = 0;
@@ -205,7 +218,7 @@
                 icon: "landmark"
             }
         };
-        
+
         function initMap() {
             // Créer la carte centrée sur la destination
             map = L.map('map', {
@@ -213,18 +226,18 @@
                 doubleClickZoom: false,
                 closePopupOnClick: false
             }).setView(pointsOfInterest.mirrorDoor.coords, 18);
-            
+
             // Ajouter la couche de tuiles OpenStreetMap avec un style plus contrasté
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
                 maxZoom: 19
             }).addTo(map);
-            
+
             // Ajouter un contrôle de zoom personnalisé
             L.control.zoom({
                 position: 'topright'
             }).addTo(map);
-            
+
             // Ajouter tous les points d'intérêt avec des icônes personnalisées
             Object.values(pointsOfInterest).forEach(poi => {
                 L.marker(poi.coords, {
@@ -235,14 +248,14 @@
                         extraClasses: 'fa-rotate-0'
                     })
                 }).addTo(map)
-                .bindPopup(`<b>${poi.name}</b>`)
-                .openPopup();
+                    .bindPopup(`<b>${poi.name}</b>`)
+                    .openPopup();
             });
-            
+
             // Démarrer le suivi GPS
             startGPSTracking();
         }
-        
+
         function startGPSTracking() {
             if (navigator.geolocation) {
                 // Options pour une haute précision
@@ -251,14 +264,14 @@
                     timeout: 10000,
                     maximumAge: 0
                 };
-                
+
                 // Démarrer le watchPosition pour un suivi continu
                 watchId = navigator.geolocation.watchPosition(
                     position => updatePosition(position),
                     error => handleGeolocationError(error),
                     options
                 );
-                
+
                 // Écouter l'orientation du dispositif si disponible
                 if (window.DeviceOrientationEvent) {
                     window.addEventListener('deviceorientation', handleOrientation);
@@ -268,11 +281,11 @@
                 map.setView(pointsOfInterest.mirrorDoor.coords, 15);
             }
         }
-        
+
         function updatePosition(position) {
             const userCoords = [position.coords.latitude, position.coords.longitude];
             const accuracy = position.coords.accuracy;
-            
+
             // Mettre à jour le marqueur de position
             if (!userMarker) {
                 userMarker = L.marker(userCoords, {
@@ -283,9 +296,9 @@
                     }),
                     zIndexOffset: 1000
                 }).addTo(map)
-                .bindPopup("<b>Votre position</b>")
-                .openPopup();
-                
+                    .bindPopup("<b>Votre position</b>")
+                    .openPopup();
+
                 // Ajouter un cercle de précision
                 accuracyCircle = L.circle(userCoords, {
                     color: '#4285F4',
@@ -293,7 +306,7 @@
                     fillOpacity: 0.2,
                     radius: accuracy
                 }).addTo(map);
-                
+
                 // Calculer l'itinéraire initial vers la destination actuelle
                 const destination = currentDestination ? currentDestination.coords : pointsOfInterest.mirrorDoor.coords;
                 calculateRoute(userCoords, destination);
@@ -301,10 +314,10 @@
                 userMarker.setLatLng(userCoords);
                 accuracyCircle.setLatLng(userCoords).setRadius(accuracy);
             }
-            
+
             // Mettre à jour la distance
             updateDistance(userCoords, currentDestination ? currentDestination.coords : pointsOfInterest.mirrorDoor.coords);
-            
+
             // Recentrer légèrement la carte si nécessaire
             if (!isMapOpen) {
                 const destination = currentDestination ? currentDestination.coords : pointsOfInterest.mirrorDoor.coords;
@@ -315,26 +328,26 @@
                 map.setView(newCenter);
             }
         }
-        
+
         function updateDistance(userCoords, destinationCoords) {
             const distance = map.distance(userCoords, destinationCoords);
             remainingDistance = distance;
-            
+
             // Mettre à jour l'affichage de la distance
             const distanceElement = document.getElementById('distance-indicator');
             if (distance < 1000) {
                 distanceElement.textContent = `Distance: ${Math.round(distance)} mètres`;
             } else {
-                distanceElement.textContent = `Distance: ${(distance/1000).toFixed(1)} km`;
+                distanceElement.textContent = `Distance: ${(distance / 1000).toFixed(1)} km`;
             }
-            
+
             // Mettre à jour la barre de progression
             if (totalDistance > 0) {
                 const progress = Math.max(0, Math.min(100, 100 - (distance / totalDistance * 100)));
                 document.getElementById('progress-bar').style.width = `${progress}%`;
             }
         }
-        
+
         function handleOrientation(event) {
             if (event.alpha !== null && userMarker) {
                 currentHeading = event.alpha;
@@ -342,7 +355,7 @@
                 rotateUserMarker();
             }
         }
-        
+
         function updateCompass() {
             const compass = document.getElementById('compass');
             const directions = ['↑ N', '↗ NE', '→ E', '↘ SE', '↓ S', '↙ SW', '← W', '↖ NW'];
@@ -350,7 +363,7 @@
             compass.textContent = directions[index];
             compass.style.transform = `rotate(${currentHeading}deg)`;
         }
-        
+
         function rotateUserMarker() {
             if (userMarker) {
                 const icon = userMarker.options.icon;
@@ -358,12 +371,12 @@
                 userMarker.setIcon(icon);
             }
         }
-        
+
         function calculateRoute(startCoords, endCoords = pointsOfInterest.mirrorDoor.coords) {
             if (routingControl) {
                 map.removeControl(routingControl);
             }
-            
+
             // Configurer le contrôle d'itinéraire
             routingControl = L.Routing.control({
                 waypoints: [
@@ -379,13 +392,13 @@
                 draggableWaypoints: false,
                 language: 'fr',
                 lineOptions: {
-                    styles: [{color: '#4285F4', opacity: 0.9, weight: 6}]
+                    styles: [{ color: '#4285F4', opacity: 0.9, weight: 6 }]
                 },
                 createMarker: () => null
             }).addTo(map);
-            
+
             // Écouter les événements de routage
-            routingControl.on('routesfound', function(e) {
+            routingControl.on('routesfound', function (e) {
                 const routes = e.routes;
                 if (routes && routes.length > 0) {
                     totalDistance = routes[0].summary.totalDistance;
@@ -393,50 +406,51 @@
                     const instructions = routes[0].instructions;
                     currentRouteInstructions = instructions;
                     updateInstructionPanel(instructions, 0);
-                    
+
                     // Vérifier périodiquement la position
                     setInterval(() => checkProgress(userMarker.getLatLng(), instructions, endCoords), 3000);
                 }
             });
         }
-        
+
         function updateInstructionPanel(instructions, currentStepIndex) {
             const instructionsContainer = document.getElementById('instructions');
             // Garder la barre de progression
             const progressBar = instructionsContainer.querySelector('.progress-container');
             instructionsContainer.innerHTML = '';
             if (progressBar) instructionsContainer.appendChild(progressBar);
-            
+
             instructions.forEach((instruction, index) => {
                 const stepDiv = document.createElement('div');
                 stepDiv.className = `instruction-step ${index === currentStepIndex ? 'current-step' : ''}`;
-                
+
                 // Formater la distance
                 let distanceText = '';
                 if (instruction.distance > 1000) {
-                    distanceText = ` (${(instruction.distance/1000).toFixed(1)} km)`;
+                    distanceText = ` (${(instruction.distance / 1000).toFixed(1)} km)`;
                 } else if (instruction.distance > 0) {
                     distanceText = ` (${Math.round(instruction.distance)} m)`;
                 }
-                
+
                 stepDiv.innerHTML = `➔ ${instruction.text}${distanceText}`;
                 instructionsContainer.appendChild(stepDiv);
             });
-            
+
             // Faire défiler jusqu'à l'étape actuelle
             const currentStep = instructionsContainer.querySelector('.current-step');
             if (currentStep) {
                 currentStep.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             }
         }
-        
+
+        <!-- Dans la fonction checkProgress (remplacer la partie existante) -->
         function checkProgress(currentPos, instructions, destinationCoords) {
             if (!instructions || instructions.length === 0) return;
-            
+
             // Trouver l'étape la plus proche
             let closestInstruction = 0;
             let minDistance = Infinity;
-            
+
             instructions.forEach((instruction, index) => {
                 const distance = map.distance(currentPos, instruction.waypoint);
                 if (distance < minDistance) {
@@ -444,23 +458,31 @@
                     closestInstruction = index;
                 }
             });
-            
+
             // Mettre à jour le panneau d'instructions si on est proche d'une nouvelle étape
             if (minDistance < 30) { // 30m de seuil
                 updateInstructionPanel(instructions, closestInstruction);
             }
-            
+
             // Vérifier si l'utilisateur est arrivé à destination
             const destinationDistance = map.distance(currentPos, destinationCoords);
             if (destinationDistance < 20) { // 20m pour considérer arrivé
                 document.getElementById('distance-indicator').textContent = "Vous êtes arrivé!";
                 document.getElementById('progress-bar').style.width = "100%";
+
+                // Si c'est la Place de la Réunion, rediriger vers salim.html
+                if (currentDestination && currentDestination === pointsOfInterest.placeReunion) {
+                    setTimeout(() => {
+                        hideMap();
+                        window.location.href = "salim.html";
+                    }, 2000);
+                }
             }
         }
-        
+
         function handleGeolocationError(error) {
             let message = "Erreur de géolocalisation : ";
-            switch(error.code) {
+            switch (error.code) {
                 case error.PERMISSION_DENIED:
                     message += "Vous avez refusé la géolocalisation. Activez-la dans les paramètres de votre navigateur.";
                     break;
@@ -473,15 +495,15 @@
                 default:
                     message += "Erreur inconnue.";
             }
-            
+
             alert(message);
             map.setView(pointsOfInterest.mirrorDoor.coords, 15);
-            
+
             // Afficher quand même l'itinéraire depuis le centre-ville par défaut
             const defaultStart = [47.7465, 7.3390];
             calculateRoute(defaultStart);
         }
-        
+
         function showMap() {
             isMapOpen = true;
             document.getElementById('map-container').style.display = 'flex';
@@ -495,19 +517,19 @@
             }
             clearTimeout(typingTimeout);
         }
-        
+
         function showMapWithDestination(destinationKey) {
             currentDestination = pointsOfInterest[destinationKey];
             isMapOpen = true;
             document.getElementById('map-container').style.display = 'flex';
-            
+
             if (!map) {
                 initMap();
             }
-            
+
             // Recentrer sur la destination
             map.setView(currentDestination.coords, 18);
-            
+
             // Si on a une position utilisateur, calculer l'itinéraire
             if (userMarker) {
                 calculateRoute(userMarker.getLatLng(), currentDestination.coords);
@@ -518,10 +540,10 @@
                     routingControl = null;
                 }
             }
-            
+
             clearTimeout(typingTimeout);
         }
-        
+
         function hideMap() {
             isMapOpen = false;
             document.getElementById('map-container').style.display = 'none';
@@ -529,7 +551,7 @@
                 typeWriter();
             }
         }
-        
+
         function cleanupMap() {
             if (watchId) {
                 navigator.geolocation.clearWatch(watchId);
@@ -542,7 +564,7 @@
                 map = null;
             }
         }
-        
+
         function typeWriter() {
             if (isMapOpen) return;
 
@@ -554,17 +576,17 @@
                         const fullText = phrases[phraseIndex];
                         const linkStart = fullText.indexOf("<span");
                         const linkEnd = fullText.indexOf("</span>") + 7;
-                        
+
                         if (charIndex < linkStart) {
                             dialogueElement.innerHTML = fullText.substring(0, charIndex + 1);
                             charIndex++;
                         } else if (charIndex < linkEnd) {
                             if (charIndex === linkStart) {
-                                dialogueElement.innerHTML = fullText.substring(0, linkStart) + 
+                                dialogueElement.innerHTML = fullText.substring(0, linkStart) +
                                     fullText.substring(linkStart, charIndex + 1);
                             } else {
-                                dialogueElement.innerHTML = fullText.substring(0, linkStart) + 
-                                    fullText.substring(linkStart, charIndex + 1) + "</span>" + 
+                                dialogueElement.innerHTML = fullText.substring(0, linkStart) +
+                                    fullText.substring(linkStart, charIndex + 1) + "</span>" +
                                     fullText.substring(linkEnd);
                             }
                             charIndex++;
@@ -576,7 +598,7 @@
                         // Gestion spéciale pour la première phrase
                         const baseText = "Before I tell you my story, come and see me at the ";
                         const linkText = "mirror door";
-                        
+
                         if (charIndex < baseText.length) {
                             dialogueElement.innerHTML = baseText.substring(0, charIndex + 1);
                             charIndex++;
@@ -584,8 +606,8 @@
                             const linkPos = charIndex - baseText.length;
                             if (linkPos < linkText.length) {
                                 if (linkPos === 0) {
-                                    dialogueElement.innerHTML = baseText + 
-                                        '<span class="dialogue-link" id="mirror-door-link">' + 
+                                    dialogueElement.innerHTML = baseText +
+                                        '<span class="dialogue-link" id="mirror-door-link">' +
                                         linkText.substring(0, linkPos + 1) + '</span>';
                                 } else {
                                     const link = document.getElementById('mirror-door-link');
@@ -601,7 +623,7 @@
                         dialogueElement.innerHTML = phrases[phraseIndex].substring(0, charIndex + 1);
                         charIndex++;
                     }
-                    
+
                     typingTimeout = setTimeout(typeWriter, 30);
                 } else {
                     isTyping = false;
@@ -609,7 +631,7 @@
                     if (phraseIndex === 0) {
                         const link = document.getElementById('mirror-door-link');
                         if (link) {
-                            link.addEventListener('click', function(e) {
+                            link.addEventListener('click', function (e) {
                                 e.preventDefault();
                                 showMap();
                             });
@@ -617,7 +639,7 @@
                     } else if ([3, 6, 8].includes(phraseIndex)) {
                         const links = dialogueElement.querySelectorAll('.dialogue-link');
                         links.forEach(link => {
-                            link.addEventListener('click', function(e) {
+                            link.addEventListener('click', function (e) {
                                 e.preventDefault();
                                 const destination = this.getAttribute('data-destination');
                                 showMapWithDestination(destination);
@@ -627,7 +649,7 @@
                 }
             }
         }
-        
+
         function nextPhrase() {
             if (isMapOpen) return;
 
@@ -635,10 +657,10 @@
                 if (phraseIndex === 0) {
                     dialogueElement.innerHTML = "Before I tell you my story, come and see me at the " +
                         '<span class="dialogue-link" id="mirror-door-link">mirror door</span>';
-                    
+
                     const link = document.getElementById('mirror-door-link');
                     if (link) {
-                        link.addEventListener('click', function(e) {
+                        link.addEventListener('click', function (e) {
                             e.preventDefault();
                             showMap();
                         });
@@ -647,7 +669,7 @@
                     dialogueElement.innerHTML = phrases[phraseIndex];
                     const links = dialogueElement.querySelectorAll('.dialogue-link');
                     links.forEach(link => {
-                        link.addEventListener('click', function(e) {
+                        link.addEventListener('click', function (e) {
                             e.preventDefault();
                             const destination = this.getAttribute('data-destination');
                             showMapWithDestination(destination);
@@ -661,7 +683,7 @@
                 clearTimeout(typingTimeout);
                 return;
             }
-            
+
             phraseIndex++;
             charIndex = 0;
             dialogueElement.innerHTML = '';
@@ -669,22 +691,22 @@
                 typeWriter();
             }
         }
-        
-        window.onload = function() {
+
+        window.onload = function () {
             setTimeout(typeWriter, 500);
             document.getElementById('close-map').addEventListener('click', hideMap);
-            
+
             // Détection de la plateforme pour ajuster l'interface
             if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
                 document.getElementById('map').style.height = '65%';
                 document.getElementById('instructions').style.height = '25%';
             }
         };
-        
-        window.onbeforeunload = function() {
+
+        window.onbeforeunload = function () {
             cleanupMap();
         };
-        
+
         document.addEventListener('click', nextPhrase);
     </script>
 </body>
