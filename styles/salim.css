@@ -61,7 +61,7 @@ body {
     position: absolute;
     width: 100%;
     height: 100%;
-    background-image: url('images/villagefond.png');
+    background-image: url('/images/villagefond.png');
     background-size: cover;
     background-position: center;
 }
@@ -71,7 +71,7 @@ body {
     width: 140px;
     height: 140px;
     border-radius: 100%;
-    background-image: url('./images/cible.png');
+    background-image: url('/images/cible.png');
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
