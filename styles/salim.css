@@ -71,7 +71,7 @@ body {
     width: 140px;
     height: 140px;
     border-radius: 100%;
-    background-image: url('images/cible.png');
+    background-image: url('/images/cible.png');
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
