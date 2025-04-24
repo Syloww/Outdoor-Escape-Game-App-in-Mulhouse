@@ -99,6 +99,49 @@
             }, preloaderDuration);
         });
     </script>
+    <!-- Ajoutez ce script à la fin de votre body, avant la balise de fermeture </body> -->
+<script>
+    // Fonction pour vérifier la position
+    function checkPosition() {
+        if (navigator.geolocation) {
+            navigator.geolocation.watchPosition(
+                function(position) {
+                    // Coordonnées de la Place de la Réunion (à remplacer par les vraies coordonnées)
+                    const targetLat = 47.7485; // Exemple - remplacer par la latitude réelle
+                    const targetLng = 7.3397;  // Exemple - remplacer par la longitude réelle
+                    
+                    // Position actuelle
+                    const userLat = position.coords.latitude;
+                    const userLng = position.coords.longitude;
+                    
+                    // Calcul de la distance en mètres (formule simplifiée)
+                    const distance = Math.sqrt(
+                        Math.pow(userLat - targetLat, 2) + 
+                        Math.pow(userLng - targetLng, 2)
+                    ) * 111320; // Conversion en mètres
+                    
+                    // Si l'utilisateur est à moins de 50 mètres
+                    if (distance < 50) {
+                        window.location.href = "salim.html";
+                    }
+                },
+                function(error) {
+                    console.error("Erreur de géolocalisation:", error);
+                },
+                { enableHighAccuracy: true, maximumAge: 10000, timeout: 5000 }
+            );
+        }
+    }
+
+    // Démarrer la vérification après le chargement de la page
+    document.addEventListener('DOMContentLoaded', function() {
+        // Vérifier si on est déjà sur salim.html
+        if (!window.location.pathname.endsWith('salim.html')) {
+            // Vérifier la position après le preloader
+            setTimeout(checkPosition, 6500); // 6s de preloader + 500ms de délai
+        }
+    });
+</script>
 </body>
 
 </html>

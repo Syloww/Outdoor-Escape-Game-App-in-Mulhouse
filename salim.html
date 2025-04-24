@@ -5,175 +5,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Tir à la Fléchette Pro</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            touch-action: manipulation;
-            font-family: Arial, sans-serif;
-            background-color: #000;
-        }
-
-        #gameContainer {
-            position: relative;
-            width: 100vw;
-            height: 100vh;
-            overflow: hidden;
-        }
-
-        #background {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            background-image: url('images/villagefond.png');
-            background-size: cover;
-            background-position: center;
-        }
-
-        #target {
-            position: absolute;
-            width: 140px;
-            height: 140px;
-            border-radius: 100%;
-            background-image: url('images/cible.png');
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            transition: transform 0.1s;
-        }
-
-        #dart {
-            position: absolute;
-            width: 4px;
-            height: 40px;
-            background-color: #8B4513;
-            /* Marron */
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 10;
-            border-radius: 2px;
-        }
-
-        #crosshair {
-            position: absolute;
-            width: 10px;
-            height: 10px;
-            border: 2px solid rgba(255, 255, 255, 0.7);
-            border-radius: 50%;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            pointer-events: none;
-            z-index: 5;
-        }
-
-        .panel{
-            position: fixed;
-            width: 100%;
-            padding: 20px;
-            display: flex;
-            background-color: rgba(0, 0, 0, 0.395);
-        }
-        
-        #scorePanel {
-            color: white;
-            font-size: 18px;
-            padding: 10px;
-            border-radius: 5px;
-            z-index: 20;
-        }
-
-        #levelPanel {
-            color: white;
-            font-size: 18px;
-            padding: 10px;
-            border-radius: 5px;
-            z-index: 20;
-        }
-
-        #instructions {
-            position: absolute;
-            bottom: 80px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: white;
-            text-align: center;
-            background-color: rgba(0, 0, 0, 0.7);
-            padding: 10px;
-            border-radius: 5px;
-            z-index: 20;
-            font-size: 16px;
-            transition: opacity 1s;
-        }
-
-        .hitMarker {
-            position: absolute;
-            width: 15px;
-            height: 15px;
-            background-color: red;
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            opacity: 0;
-            transition: opacity 0.3s;
-            z-index: 15;
-        }
-
-        .scorePopup {
-            position: absolute;
-            color: white;
-            font-size: 24px;
-            font-weight: bold;
-            text-shadow: 1px 1px 3px black;
-            transform: translate(-50%, -50%);
-            animation: scoreFade 1.5s forwards;
-            z-index: 16;
-        }
-
-        @keyframes scoreFade {
-            0% {
-                opacity: 1;
-                transform: translate(-50%, -50%) scale(0.5);
-            }
-
-            50% {
-                opacity: 1;
-                transform: translate(-50%, -100%) scale(1.2);
-            }
-
-            100% {
-                opacity: 0;
-                transform: translate(-50%, -150%) scale(0.8);
-            }
-        }
-
-        #progressContainer {
-            position: absolute;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 80%;
-            height: 10px;
-            background-color: rgba(0, 0, 0, 0.5);
-            border-radius: 5px;
-            z-index: 20;
-        }
-
-        #progressBar {
-            height: 100%;
-            width: 0%;
-            background-color: #4CAF50;
-            border-radius: 5px;
-            transition: width 0.3s;
-        }
-    </style>
+    <link rel="stylesheet" href="styles/salim.css">
 </head>
 
 <body>
+    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="#FFF" class="bi bi-patch-question-fill"
+        viewBox="0 0 16 16" id="tutobouton">
+        <path
+            d="M5.933.87a2.89 2.89 0 0 1 4.134 0l.622.638.89-.011a2.89 2.89 0 0 1 2.924 2.924l-.01.89.636.622a2.89 2.89 0 0 1 0 4.134l-.637.622.011.89a2.89 2.89 0 0 1-2.924 2.924l-.89-.01-.622.636a2.89 2.89 0 0 1-4.134 0l-.622-.637-.89.011a2.89 2.89 0 0 1-2.924-2.924l.01-.89-.636-.622a2.89 2.89 0 0 1 0-4.134l.637-.622-.011-.89a2.89 2.89 0 0 1 2.924-2.924l.89.01zM7.002 11a1 1 0 1 0 2 0 1 1 0 0 0-2 0m1.602-2.027c.04-.534.198-.815.846-1.26.674-.475 1.05-1.09 1.05-1.986 0-1.325-.92-2.227-2.262-2.227-1.02 0-1.792.492-2.1 1.29A1.7 1.7 0 0 0 6 5.48c0 .393.203.64.545.64.272 0 .455-.147.564-.51.158-.592.525-.915 1.074-.915.61 0 1.03.446 1.03 1.084 0 .563-.208.885-.822 1.325-.619.433-.926.914-.926 1.64v.111c0 .428.208.745.585.745.336 0 .504-.24.554-.627" />
+    </svg>
+    <section class="tuto cacher">
+        <div class="tuto-contenu">
+            <h1>Tuto</h1>
+            <p>Visez la cible en inclinant le téléphone</p>
+            <p>En fonction de l'endroit toucher le score diminue ou augmente.</p>
+            <p>Bon jeu !</p>
+        </div>
+    </section>
+
     <div id="gameContainer">
         <div id="background"></div>
         <div id="target"></div>
@@ -197,6 +46,12 @@
         </div>
     </div>
 
+
+    <script>
+        document.querySelector("#tutobouton").addEventListener("click", function () {
+            document.querySelector(".tuto").classList.toggle("cacher");
+        });
+    </script>
     <script>
         // Variables du jeu
         let score = 0;
@@ -286,7 +141,6 @@
             progressBar.style.width = `${(score / nextLevelThreshold) * 100}%`;
         }
 
-        // Vérification du niveau
         function checkLevelUp() {
             if (score >= nextLevelThreshold) {
                 level++;
@@ -309,6 +163,19 @@
                 setTimeout(() => {
                     gameContainer.removeChild(levelUpPopup);
                 }, 1500);
+
+                // Vérifier si le score atteint 100 pour rediriger
+                if (score >= 100) {
+                    const victoryPopup = document.createElement('div');
+                    victoryPopup.className = 'victoryPopup';
+                    victoryPopup.textContent = 'Félicitations! Vous avez gagné!';
+                    gameContainer.appendChild(victoryPopup);
+
+                    setTimeout(() => {
+                        // Rediriger vers la page de dialogue
+                        window.location.href = "dialogue.html";
+                    }, 3000);
+                }
             }
         }
 
