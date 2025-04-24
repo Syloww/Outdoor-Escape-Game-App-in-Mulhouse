@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aventure du Pigeon</title>
+    <link rel="stylesheet" href="styles/dialogue.css">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- Leaflet Routing Machine CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+    <!-- Leaflet.awesome-markers -->
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css" />
+    <!-- css -->
+    <link rel="stylesheet" href="styles/dialogue.css">
+</head>
+
+<body class="bg1">
+    <div id="map-container">
+        <button id="close-map">I'm here</button>
+        <div class="distance-indicator" id="distance-indicator">Distance: --</div>
+        <div class="compass" id="compass">↑</div>
+        <div id="map"></div>
+        <div id="instructions">
+            <div class="progress-container">
+                <div class="progress-bar" id="progress-bar"></div>
+            </div>
+        </div>
+    </div>
+
+    <button id="game1-btn" class="game-button">Game 1</button>
+    <button id="game2-btn" class="game-button">Game 2</button>
+    <button id="game3-btn" class="game-button">Game 3</button>
+
+    <div class="pigeon-container">
+        <img src="images/pigeon.png" alt="pigeon" class="pigeon">
+    </div>
+    <div class="dialogue-box">
+        <span id="dialogue-text"></span>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Leaflet Routing Machine JS -->
+    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+    <!-- Leaflet.awesome-markers -->
+    <script
+        src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.min.js"></script>
+    <!-- Leaflet.Geolocation -->
+    <script src="https://unpkg.com/leaflet.geolocation@1.0.4/dist/leaflet.geolocation.min.js"></script>
+
+    <script>
+        const phrases = [
+            "Before I tell you my story, come and see me at the mirror door.",
+            "Here I am in front of the Mirror Gate... Did you know that this place has quite a history? It all began in 1852 with Madame Koechlin, a great lady of Mulhouse. She set up the Comités de Patronage to help people in their own homes. In 1923, this district became the Patronage du Quartier Sud, then in 1957, the Centre Social Pont d'Altkirch, thanks to Madame Dolfus. It was a place for care and meetings...",
+            "...but today it's also a place where some mad scientists put this tracking collar on me! I've managed to escape from their lab, but to really be free, I have to deactivate three modules hidden around Mulhouse. And guess what? The first is right here, in this garden full of mysteries. So let's get on with the adventure!",
+            "First, off to the <span class='dialogue-link' data-destination='gardenOfFragrance'>Garden of Fragrance</span>! The first module is hidden away in a corner. Use the map to find your way!",
+            "Created in 1987, this 1,500 m² garden was designed by ophthalmologist Dr Rolf Benner to help blind and partially sighted people use their sense of smell and touch to find their way around.",
+            "I'm allergic to pollen, so I can hardly see anything. I have to pop all the balloons by following their sound: only the ones that beep sharply! The others are trapped and spread pollen. By ear and sneezing, I pop them one by one until the last one explodes.<span id='game1-trigger'></span>",
+            "Yippee! I did it! Thanks for helping me!!! Now head to the <span class='dialogue-link' data-destination='gambrinus'>Gambrinus</span>!",
+            "Here I am in front of the Gambrinus, the liveliest bar in Mulhouse. My sensor is flashing: to deactivate it, you have to pour EXACTLY the right amount into the marked glass!<span id='game2-trigger'></span>",
+            "Yippee! I did it! Thank you for helping me! Finally, meet me at the <span class='dialogue-link' data-destination='placeReunion'>Place de la Réunion</span> opposite the historical museum.",
+            "The statue on the Place de la Réunion in Mulhouse represents William Tell, the legendary Swiss hero. According to tradition, he was forced by the Austrian governor Gessler to shoot an arrow at an apple placed on his son's head. His perfect shot made him a symbol of resistance and freedom. This statue is a reminder of the historic links between Mulhouse and Switzerland, before the town joined France in 1798.",
+            "I've almost done it! The collar is half deactivated, but to blow it up DEFINITELY, I still have to do the ultimate test: The Dart Shot<span id='game3-trigger'></span>",
+            "Yippee! I did it! Thank you for helping me!!! Now I'm going back to my life as a heroic pigeon! Maybe one day we'll meet up again for a new adventure... In the meantime, stay smart like a pigeon!"
+        ];
+
+        const dialogueElement = document.getElementById('dialogue-text');
+        let phraseIndex = 0;
+        let charIndex = 0;
+        let isTyping = false;
+        let typingTimeout;
+        let isMapOpen = false;
+        let map, routingControl, userMarker, watchId, accuracyCircle;
+        let currentRouteInstructions = [];
+        let totalDistance = 0;
+        let remainingDistance = 0;
+        let currentHeading = 0;
+        let currentDestination = null;
+
+        // Points of interest coordinates
+        const pointsOfInterest = {
+            mirrorDoor: {
+                coords: [47.748381528597086, 7.333458419631289],
+                name: "Mirror Door",
+                icon: "map-marker-alt"
+            },
+            gardenOfFragrance: {
+                coords: [47.7475, 7.3320],
+                name: "Garden of Fragrance",
+                icon: "leaf"
+            },
+            gambrinus: {
+                coords: [47.7490, 7.3350],
+                name: "Gambrinus Bar",
+                icon: "beer"
+            },
+            placeReunion: {
+                coords: [47.74663, 7.3393],
+                name: "Place de la Réunion",
+                icon: "landmark"
+            }
+        };
+
+        function initMap() {
+            map = L.map('map', {
+                zoomControl: false,
+                doubleClickZoom: false,
+                closePopupOnClick: false
+            }).setView(pointsOfInterest.mirrorDoor.coords, 18);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                maxZoom: 19
+            }).addTo(map);
+
+            L.control.zoom({
+                position: 'topright'
+            }).addTo(map);
+
+            startGPSTracking();
+        }
+
+        function startGPSTracking() {
+            if (navigator.geolocation) {
+                const options = {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                };
+
+                watchId = navigator.geolocation.watchPosition(
+                    position => updatePosition(position),
+                    error => handleGeolocationError(error),
+                    options
+                );
+
+                if (window.DeviceOrientationEvent) {
+                    window.addEventListener('deviceorientation', handleOrientation);
+                }
+            } else {
+                alert("Geolocation is not supported by your browser.");
+                map.setView(pointsOfInterest.mirrorDoor.coords, 15);
+            }
+        }
+
+        function updatePosition(position) {
+            const userCoords = [position.coords.latitude, position.coords.longitude];
+            const accuracy = position.coords.accuracy;
+
+            if (!userMarker) {
+                userMarker = L.marker(userCoords, {
+                    icon: L.AwesomeMarkers.icon({
+                        icon: 'user',
+                        markerColor: 'blue',
+                        prefix: 'fa'
+                    }),
+                    zIndexOffset: 1000
+                }).addTo(map)
+                    .bindPopup("<b>Your position</b>")
+                    .openPopup();
+
+                accuracyCircle = L.circle(userCoords, {
+                    color: '#4285F4',
+                    fillColor: '#4285F4',
+                    fillOpacity: 0.2,
+                    radius: accuracy
+                }).addTo(map);
+
+                const destination = currentDestination ? currentDestination.coords : pointsOfInterest.mirrorDoor.coords;
+                calculateRoute(userCoords, destination);
+            } else {
+                userMarker.setLatLng(userCoords);
+                accuracyCircle.setLatLng(userCoords).setRadius(accuracy);
+            }
+
+            updateDistance(userCoords, currentDestination ? currentDestination.coords : pointsOfInterest.mirrorDoor.coords);
+
+            if (!isMapOpen) {
+                const destination = currentDestination ? currentDestination.coords : pointsOfInterest.mirrorDoor.coords;
+                const newCenter = L.latLng(
+                    (userCoords[0] + destination[0]) / 2,
+                    (userCoords[1] + destination[1]) / 2
+                );
+                map.setView(newCenter);
+            }
+        }
+
+        function updateDistance(userCoords, destinationCoords) {
+            const distance = map.distance(userCoords, destinationCoords);
+            remainingDistance = distance;
+
+            const distanceElement = document.getElementById('distance-indicator');
+            if (distance < 1000) {
+                distanceElement.textContent = `Distance: ${Math.round(distance)} meters`;
+            } else {
+                distanceElement.textContent = `Distance: ${(distance / 1000).toFixed(1)} km`;
+            }
+
+            if (totalDistance > 0) {
+                const progress = Math.max(0, Math.min(100, 100 - (distance / totalDistance * 100)));
+                document.getElementById('progress-bar').style.width = `${progress}%`;
+            }
+        }
+
+        function handleOrientation(event) {
+            if (event.alpha !== null && userMarker) {
+                currentHeading = event.alpha;
+                updateCompass();
+                rotateUserMarker();
+            }
+        }
+
+        function updateCompass() {
+            const compass = document.getElementById('compass');
+            const directions = ['↑ N', '↗ NE', '→ E', '↘ SE', '↓ S', '↙ SW', '← W', '↖ NW'];
+            const index = Math.round(((currentHeading % 360) / 45)) % 8;
+            compass.textContent = directions[index];
+            compass.style.transform = `rotate(${currentHeading}deg)`;
+        }
+
+        function rotateUserMarker() {
+            if (userMarker) {
+                const icon = userMarker.options.icon;
+                icon.options.extraClasses = `fa-rotate-${360 - currentHeading}`;
+                userMarker.setIcon(icon);
+            }
+        }
+
+        function calculateRoute(startCoords, endCoords = pointsOfInterest.mirrorDoor.coords) {
+            if (routingControl) {
+                map.removeControl(routingControl);
+            }
+
+            routingControl = L.Routing.control({
+                waypoints: [
+                    L.latLng(startCoords[0], startCoords[1]),
+                    L.latLng(endCoords[0], endCoords[1])
+                ],
+                routeWhileDragging: false,
+                showAlternatives: false,
+                fitSelectedRoutes: true,
+                show: true,
+                collapsible: true,
+                addWaypoints: false,
+                draggableWaypoints: false,
+                language: 'en',
+                lineOptions: {
+                    styles: [{ color: '#4285F4', opacity: 0.9, weight: 6 }]
+                },
+                createMarker: () => null
+            }).addTo(map);
+
+            routingControl.on('routesfound', function (e) {
+                const routes = e.routes;
+                if (routes && routes.length > 0) {
+                    totalDistance = routes[0].summary.totalDistance;
+                    remainingDistance = totalDistance;
+                    const instructions = routes[0].instructions;
+                    currentRouteInstructions = instructions;
+                    updateInstructionPanel(instructions, 0);
+
+                    setInterval(() => checkProgress(userMarker.getLatLng(), instructions, endCoords), 3000);
+                }
+            });
+        }
+
+        function updateInstructionPanel(instructions, currentStepIndex) {
+            const instructionsContainer = document.getElementById('instructions');
+            const progressBar = instructionsContainer.querySelector('.progress-container');
+            instructionsContainer.innerHTML = '';
+            if (progressBar) instructionsContainer.appendChild(progressBar);
+
+            instructions.forEach((instruction, index) => {
+                const stepDiv = document.createElement('div');
+                stepDiv.className = `instruction-step ${index === currentStepIndex ? 'current-step' : ''}`;
+
+                let distanceText = '';
+                if (instruction.distance > 1000) {
+                    distanceText = ` (${(instruction.distance / 1000).toFixed(1)} km)`;
+                } else if (instruction.distance > 0) {
+                    distanceText = ` (${Math.round(instruction.distance)} m)`;
+                }
+
+                stepDiv.innerHTML = `➔ ${instruction.text}${distanceText}`;
+                instructionsContainer.appendChild(stepDiv);
+            });
+
+            const currentStep = instructionsContainer.querySelector('.current-step');
+            if (currentStep) {
+                currentStep.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+
+        function checkProgress(currentPos, instructions, destinationCoords) {
+            if (!instructions || instructions.length === 0) return;
+
+            let closestInstruction = 0;
+            let minDistance = Infinity;
+
+            instructions.forEach((instruction, index) => {
+                const distance = map.distance(currentPos, instruction.waypoint);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closestInstruction = index;
+                }
+            });
+
+            if (minDistance < 30) {
+                updateInstructionPanel(instructions, closestInstruction);
+            }
+        }
+
+        function showGameButton(buttonId) {
+            document.getElementById(buttonId).style.display = 'block';
+        }
+
+        function hideAllGameButtons() {
+            document.querySelectorAll('.game-button').forEach(btn => {
+                btn.style.display = 'none';
+            });
+        }
+
+        document.getElementById('close-map').addEventListener('click', function () {
+            if (currentDestination && currentDestination.name === "Place de la Réunion") {
+                window.location.href = "salim.html";
+            } else {
+                hideMap();
+            }
+        });
+
+        function handleGeolocationError(error) {
+            let message = "Geolocation error: ";
+            switch (error.code) {
+                case error.PERMISSION_DENIED:
+                    message += "You denied geolocation. Please enable it in your browser settings.";
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    message += "Position unavailable. Check your connection.";
+                    break;
+                case error.TIMEOUT:
+                    message += "Request timed out. Try in an area with better reception.";
+                    break;
+                default:
+                    message += "Unknown error.";
+            }
+
+            alert(message);
+            map.setView(pointsOfInterest.mirrorDoor.coords, 15);
+
+            const defaultStart = [47.7465, 7.3390];
+            calculateRoute(defaultStart);
+        }
+
+        function showMap() {
+            isMapOpen = true;
+            document.getElementById('map-container').style.display = 'flex';
+            if (!map) {
+                initMap();
+            } else if (userMarker) {
+                map.setView(userMarker.getLatLng(), 18);
+            }
+            clearTimeout(typingTimeout);
+            hideAllGameButtons();
+        }
+
+        function showMapWithDestination(destinationKey) {
+            currentDestination = pointsOfInterest[destinationKey];
+            isMapOpen = true;
+            document.getElementById('map-container').style.display = 'flex';
+
+            if (!map) {
+                initMap();
+            }
+
+            map.eachLayer(layer => {
+                if (layer instanceof L.Marker && layer !== userMarker) {
+                    map.removeLayer(layer);
+                }
+            });
+
+            L.marker(currentDestination.coords, {
+                icon: L.AwesomeMarkers.icon({
+                    icon: currentDestination.icon,
+                    markerColor: 'red',
+                    prefix: 'fa',
+                    extraClasses: 'fa-rotate-0'
+                })
+            }).addTo(map)
+                .bindPopup(`<b>${currentDestination.name}</b>`)
+                .openPopup();
+
+            map.setView(currentDestination.coords, 18);
+
+            if (userMarker) {
+                calculateRoute(userMarker.getLatLng(), currentDestination.coords);
+            } else {
+                if (routingControl) {
+                    map.removeControl(routingControl);
+                    routingControl = null;
+                }
+            }
+
+            clearTimeout(typingTimeout);
+            hideAllGameButtons();
+        }
+
+        function hideMap() {
+            isMapOpen = false;
+            document.getElementById('map-container').style.display = 'none';
+
+            // Restore appropriate background
+            switch (phraseIndex) {
+                case 0: document.body.className = 'bg1'; break;
+                case 3: document.body.className = 'bg2'; break;
+                case 6: document.body.className = 'bg3'; break;
+                case 9: document.body.className = 'bg4'; break;
+                default: document.body.className = '';
+            }
+
+            if (phraseIndex < phrases.length && charIndex < phrases[phraseIndex].length) {
+                typeWriter();
+            }
+        }
+
+        function cleanupMap() {
+            if (watchId) {
+                navigator.geolocation.clearWatch(watchId);
+            }
+            if (window.DeviceOrientationEvent) {
+                window.removeEventListener('deviceorientation', handleOrientation);
+            }
+            if (map) {
+                map.remove();
+                map = null;
+            }
+        }
+
+        function typeWriter() {
+            if (isMapOpen) return;
+
+            isTyping = true;
+
+            // Set appropriate background
+            switch (phraseIndex) {
+                case 0: document.body.className = 'bg1'; break;
+                case 3: document.body.className = 'bg2'; break;
+                case 6: document.body.className = 'bg3'; break;
+                case 9: document.body.className = 'bg4'; break;
+                default: document.body.className = '';
+            }
+
+            if (phraseIndex < phrases.length) {
+                if (charIndex < phrases[phraseIndex].length) {
+                    if ([3, 6, 8].includes(phraseIndex)) {
+                        const fullText = phrases[phraseIndex];
+                        const linkStart = fullText.indexOf("<span");
+                        const linkEnd = fullText.indexOf("</span>") + 7;
+
+                        if (charIndex < linkStart) {
+                            dialogueElement.innerHTML = fullText.substring(0, charIndex + 1);
+                            charIndex++;
+                        } else if (charIndex < linkEnd) {
+                            if (charIndex === linkStart) {
+                                dialogueElement.innerHTML = fullText.substring(0, linkStart) +
+                                    fullText.substring(linkStart, charIndex + 1);
+                            } else {
+                                dialogueElement.innerHTML = fullText.substring(0, linkStart) +
+                                    fullText.substring(linkStart, charIndex + 1) + "</span>" +
+                                    fullText.substring(linkEnd);
+                            }
+                            charIndex++;
+                        } else {
+                            dialogueElement.innerHTML = fullText.substring(0, charIndex + 1);
+                            charIndex++;
+                        }
+                    } else if (phraseIndex === 0) {
+                        const baseText = "Before I tell you my story, come and see me at the ";
+                        const linkText = "mirror door";
+
+                        if (charIndex < baseText.length) {
+                            dialogueElement.innerHTML = baseText.substring(0, charIndex + 1);
+                            charIndex++;
+                        } else {
+                            const linkPos = charIndex - baseText.length;
+                            if (linkPos < linkText.length) {
+                                if (linkPos === 0) {
+                                    dialogueElement.innerHTML = baseText +
+                                        '<span class="dialogue-link" id="mirror-door-link">' +
+                                        linkText.substring(0, linkPos + 1) + '</span>';
+                                } else {
+                                    const link = document.getElementById('mirror-door-link');
+                                    if (link) {
+                                        link.textContent = linkText.substring(0, linkPos + 1);
+                                    }
+                                }
+                                charIndex++;
+                            }
+                        }
+                    } else {
+                        dialogueElement.innerHTML = phrases[phraseIndex].substring(0, charIndex + 1);
+                        charIndex++;
+                    }
+
+                    typingTimeout = setTimeout(typeWriter, 30);
+                } else {
+                    isTyping = false;
+
+                    // Show appropriate game button
+                    if (phraseIndex === 5) {
+                        showGameButton('game1-btn');
+                    } else if (phraseIndex === 7) {
+                        showGameButton('game2-btn');
+                    } else if (phraseIndex === 10) {
+                        showGameButton('game3-btn');
+                    } else {
+                        hideAllGameButtons();
+                    }
+
+                    if (phraseIndex === 0) {
+                        const link = document.getElementById('mirror-door-link');
+                        if (link) {
+                            link.addEventListener('click', function (e) {
+                                e.preventDefault();
+                                showMap();
+                            });
+                        }
+                    } else if ([3, 6, 8].includes(phraseIndex)) {
+                        const links = dialogueElement.querySelectorAll('.dialogue-link');
+                        links.forEach(link => {
+                            link.addEventListener('click', function (e) {
+                                e.preventDefault();
+                                const destination = this.getAttribute('data-destination');
+                                showMapWithDestination(destination);
+                            });
+                        });
+                    }
+                }
+            }
+        }
+
+        function nextPhrase() {
+            if (isMapOpen) return;
+
+            hideAllGameButtons();
+
+            if (isTyping) {
+                if (phraseIndex === 0) {
+                    dialogueElement.innerHTML = "Before I tell you my story, come and see me at the " +
+                        '<span class="dialogue-link" id="mirror-door-link">mirror door</span>';
+
+                    const link = document.getElementById('mirror-door-link');
+                    if (link) {
+                        link.addEventListener('click', function (e) {
+                            e.preventDefault();
+                            showMap();
+                        });
+                    }
+                } else if ([3, 6, 8].includes(phraseIndex)) {
+                    dialogueElement.innerHTML = phrases[phraseIndex];
+                    const links = dialogueElement.querySelectorAll('.dialogue-link');
+                    links.forEach(link => {
+                        link.addEventListener('click', function (e) {
+                            e.preventDefault();
+                            const destination = this.getAttribute('data-destination');
+                            showMapWithDestination(destination);
+                        });
+                    });
+                } else {
+                    dialogueElement.innerHTML = phrases[phraseIndex];
+                }
+                charIndex = phrases[phraseIndex].length;
+                isTyping = false;
+                clearTimeout(typingTimeout);
+                return;
+            }
+
+            phraseIndex++;
+            charIndex = 0;
+            dialogueElement.innerHTML = '';
+            if (phraseIndex < phrases.length) {
+                typeWriter();
+            }
+        }
+
+        window.onload = function () {
+            setTimeout(typeWriter, 500);
+            document.getElementById('close-map').addEventListener('click', hideMap);
+
+            // Setup game buttons
+            document.getElementById('game1-btn').addEventListener('click', () => {
+                window.location.href = 'sakina.html';
+            });
+
+            document.getElementById('game2-btn').addEventListener('click', () => {
+                window.location.href = 'sacha.html';
+            });
+
+            document.getElementById('game3-btn').addEventListener('click', () => {
+                window.location.href = 'salim.html';
+            });
+
+            if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+                document.getElementById('map').style.height = '65%';
+                document.getElementById('instructions').style.height = '25%';
+            }
+        };
+
+        window.onbeforeunload = function () {
+            cleanupMap();
+        };
+
+        document.addEventListener('click', nextPhrase);
+    </script>
+</body>
+
+</html>
