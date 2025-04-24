@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
@@ -40,7 +40,6 @@
         .tuto {
             position: fixed;
             inset: 0;
-            /* équivalent de top: 0; bottom: 0; left: 0; right: 0 */
             background-color: rgba(0, 0, 0, 0.5);
             z-index: 10000;
             display: flex;
@@ -69,8 +68,55 @@
             font-size: 1.2rem;
         }
 
+        .victory-message {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            font-size: 2rem;
+            text-align: center;
+            animation: fadeIn 1s;
+        }
 
-        .cacher {
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .victory-message h1 {
+            color: #4CAF50;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px rgba(76, 175, 80, 0.7);
+        }
+
+        .victory-message p {
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .victory-message button {
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .victory-message button:hover {
+            background-color: #45a049;
+        }
+
+        .hide {
             display: none;
         }
 
@@ -222,14 +268,22 @@
         <path
             d="M5.933.87a2.89 2.89 0 0 1 4.134 0l.622.638.89-.011a2.89 2.89 0 0 1 2.924 2.924l-.01.89.636.622a2.89 2.89 0 0 1 0 4.134l-.637.622.011.89a2.89 2.89 0 0 1-2.924 2.924l-.89-.01-.622.636a2.89 2.89 0 0 1-4.134 0l-.622-.637-.89.011a2.89 2.89 0 0 1-2.924-2.924l.01-.89-.636-.622a2.89 2.89 0 0 1 0-4.134l.637-.622-.011-.89a2.89 2.89 0 0 1 2.924-2.924l.89.01zM7.002 11a1 1 0 1 0 2 0 1 1 0 0 0-2 0m1.602-2.027c.04-.534.198-.815.846-1.26.674-.475 1.05-1.09 1.05-1.986 0-1.325-.92-2.227-2.262-2.227-1.02 0-1.792.492-2.1 1.29A1.7 1.7 0 0 0 6 5.48c0 .393.203.64.545.64.272 0 .455-.147.564-.51.158-.592.525-.915 1.074-.915.61 0 1.03.446 1.03 1.084 0 .563-.208.885-.822 1.325-.619.433-.926.914-.926 1.64v.111c0 .428.208.745.585.745.336 0 .504-.24.554-.627" />
     </svg>
-    <section class="tuto cacher">
+    <section class="tuto hide">
         <div class="tuto-contenu">
-            <h1>Tuto</h1>
-            <p>Visez la cible en inclinant le téléphone</p>
-            <p>En fonction de l'endroit toucher le score diminue ou augmente.</p>
-            <p>Bon jeu !</p>
+            <h1>Tutorial</h1>
+            <p>Aim at the target by tilting your phone</p>
+            <p>Depending on where you hit, the score decreases or increases.</p>
+            <p>Good luck!</p>
         </div>
     </section>
+
+    <div id="victory-screen" class="hide">
+        <div class="victory-message">
+            <h1>Congratulations!</h1>
+            <p>Well done, you've deactivated the module!</p>
+            <button onclick="restartGame()">Play Again</button>
+        </div>
+    </div>
 
     <div id="particles"></div>
 
@@ -238,13 +292,13 @@
             <div id="audio-level"></div>
         </div>
 
-        <div id="trap-warning">DANGER - PIÈGE DÉTECTÉ !</div>
+        <div id="trap-warning">DANGER - TRAP DETECTED!</div>
 
-        <div id="timer">Temps: 60s</div>
+        <div id="timer">Time: 60s</div>
         <div id="score-display">Score: 0</div>
 
         <div id="game-area">
-            <!-- Ballons invisibles placés ici -->
+            <!-- Invisible balloons placed here -->
             <div id="frequency-container">
                 <svg id="frequency-wave" viewBox="0 0 500 100" preserveAspectRatio="none">
                     <path id="wave-path" d="M0,50 Q125,50 250,50 T500,50"></path>
@@ -253,11 +307,9 @@
         </div>
     </div>
 
-
-
     <script>
         document.querySelector("#tutobouton").addEventListener("click", function () {
-            document.querySelector(".tuto").classList.toggle("cacher");
+            document.querySelector(".tuto").classList.toggle("hide");
         });
     </script>
     <script>
@@ -270,8 +322,9 @@
         const GAME_DURATION = 60;
         const BONUS_POINTS = 50;
         const BALLOON_POINTS = 10;
+        const BALLOONS_TO_POP_TO_WIN = 5;
 
-        // État du jeu
+        // Game state
         let balloons = [];
         let score = 0;
         let gameActive = false;
@@ -283,8 +336,9 @@
         let closestBalloon = null;
         let wavePoints = [];
         let particles = [];
+        let poppedBalloonsCount = 0;
 
-        // Initialisation
+        // Initialization
         function initGame() {
             createBalloons();
             setupAudio();
@@ -294,6 +348,7 @@
 
         function startGame() {
             score = 0;
+            poppedBalloonsCount = 0;
             timeLeft = GAME_DURATION;
             gameActive = true;
 
@@ -301,12 +356,10 @@
             updateTimer();
             timer = setInterval(updateGame, 1000);
 
-            // Démarrer la détection de mouvement
             const gameArea = document.getElementById('game-area');
             gameArea.addEventListener('touchmove', handleTouchMove, { passive: false });
             gameArea.addEventListener('touchend', handleTouchEnd);
 
-            // Animation de la vague
             requestAnimationFrame(animateWave);
         }
 
@@ -325,33 +378,29 @@
             const gameArea = document.getElementById('game-area');
             const rect = gameArea.getBoundingClientRect();
 
-            // Calculer le nombre de chaque type
             const realCount = Math.floor(BALLOON_COUNT * REAL_BALLOONS_RATIO);
             const trapCount = Math.floor(BALLOON_COUNT * TRAP_BALLOONS_RATIO);
             const bonusCount = BALLOON_COUNT - realCount - trapCount;
 
-            // Créer les ballons
             for (let i = 0; i < BALLOON_COUNT; i++) {
                 const balloon = document.createElement('div');
                 balloon.className = 'balloon';
 
-                // Position aléatoire
                 const x = Math.random() * (rect.width - 60);
                 const y = Math.random() * (rect.height - 60);
                 balloon.style.left = `${x}px`;
                 balloon.style.top = `${y}px`;
 
-                // Déterminer le type
                 let type, frequency;
                 if (i < realCount) {
                     type = 'real';
-                    frequency = 800 + Math.random() * 400; // 800-1200 Hz
+                    frequency = 800 + Math.random() * 400;
                 } else if (i < realCount + trapCount) {
                     type = 'trap';
-                    frequency = 150 + Math.random() * 150; // 150-300 Hz
+                    frequency = 150 + Math.random() * 150;
                 } else {
                     type = 'bonus';
-                    frequency = 1200 + Math.random() * 800; // 1200-2000 Hz
+                    frequency = 1200 + Math.random() * 800;
                 }
 
                 gameArea.appendChild(balloon);
@@ -380,12 +429,11 @@
                 gainNode.gain.value = 0;
                 oscillator.start();
             } catch (e) {
-                console.error("Erreur audio:", e);
+                console.error("Audio error:", e);
             }
         }
 
         function setupWave() {
-            // Initialiser les points de la vague
             wavePoints = [];
             for (let i = 0; i <= 50; i++) {
                 wavePoints.push({ x: i * 10, y: 50 });
@@ -396,7 +444,6 @@
         function animateWave() {
             if (!gameActive) return;
 
-            // Animer la vague même sans interaction
             if (currentFrequency === 0) {
                 const baseY = 50;
                 for (let i = 0; i < wavePoints.length; i++) {
@@ -422,13 +469,9 @@
             }
 
             path.setAttribute('d', d);
-
-            // Changer la couleur en fonction de la fréquence
             let hue = 120 - (currentFrequency / 20);
-            if (currentFrequency < 300) hue = 0; // Rouge pour les basses fréquences
+            if (currentFrequency < 300) hue = 0;
             path.setAttribute('stroke', `hsl(${hue}, 100%, 70%)`);
-
-            // Ajouter un effet de glow
             path.style.filter = `drop-shadow(0 0 5px hsl(${hue}, 100%, 50%))`;
         }
 
@@ -450,7 +493,6 @@
         function handleTouchEnd() {
             if (!gameActive) return;
 
-            // Vérifier si on est assez proche d'un ballon
             if (closestBalloon) {
                 const dx = closestBalloon.x - lastX;
                 const dy = closestBalloon.y - lastY;
@@ -467,12 +509,10 @@
         }
 
         function createParticles(x, y) {
-            // Créer des particules visuelles
             for (let i = 0; i < 3; i++) {
                 const particle = document.createElement('div');
                 particle.className = 'particle';
 
-                // Position aléatoire autour du point de contact
                 const angle = Math.random() * Math.PI * 2;
                 const distance = Math.random() * 20;
                 const px = x + Math.cos(angle) * distance;
@@ -481,17 +521,14 @@
                 particle.style.left = `${px}px`;
                 particle.style.top = `${py}px`;
 
-                // Couleur en fonction de la fréquence
                 let hue = 120 - (currentFrequency / 20);
                 if (currentFrequency < 300) hue = 0;
                 particle.style.backgroundColor = `hsl(${hue}, 100%, 70%)`;
 
-                // Animation
                 particle.style.animation = `float ${1 + Math.random() * 2}s infinite`;
 
                 document.getElementById('particles').appendChild(particle);
 
-                // Supprimer après un certain temps
                 setTimeout(() => {
                     particle.remove();
                 }, 2000);
@@ -501,7 +538,6 @@
         function updateAudioFeedback(x, y) {
             if (!gameActive) return;
 
-            // Trouver le ballon le plus proche
             closestBalloon = null;
             let minDistance = Infinity;
 
@@ -521,25 +557,20 @@
             if (closestBalloon && minDistance < ACTIVATION_DISTANCE) {
                 const volume = 1 - (minDistance / ACTIVATION_DISTANCE);
 
-                // Jouer le son correspondant
                 currentFrequency = closestBalloon.frequency;
                 oscillator.frequency.setValueAtTime(currentFrequency, audioContext.currentTime);
                 gainNode.gain.setValueAtTime(volume * 0.5, audioContext.currentTime);
 
-                // Mettre à jour l'indicateur
                 document.getElementById('audio-level').style.width = `${volume * 100}%`;
 
-                // Mettre à jour la vague
                 updateWaveWithFrequency(currentFrequency, volume);
 
-                // Avertissement pour les pièges
                 if (closestBalloon.type === 'trap') {
                     document.getElementById('trap-warning').style.display = 'block';
                 } else {
                     document.getElementById('trap-warning').style.display = 'none';
                 }
 
-                // Changer la couleur de fond
                 updateBackground(currentFrequency, volume);
             } else {
                 gainNode.gain.setValueAtTime(0, audioContext.currentTime);
@@ -567,21 +598,17 @@
             let hue, saturation, lightness;
 
             if (frequency === 0) {
-                // Pas de fréquence - fond noir
                 document.body.style.backgroundColor = '#000';
                 return;
             } else if (frequency < 300) {
-                // Piège - rouge
                 hue = 0;
                 saturation = 100;
                 lightness = 10 + volume * 20;
             } else if (frequency < 800) {
-                // Ballon normal - vert à jaune
                 hue = 60 + (frequency - 300) / 5;
                 saturation = 100;
                 lightness = 10 + volume * 15;
             } else {
-                // Bonus - jaune à blanc
                 hue = 60;
                 saturation = 100 - (frequency - 800) / 12;
                 lightness = 20 + volume * 20 + (frequency - 800) / 20;
@@ -589,7 +616,6 @@
 
             document.body.style.backgroundColor = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
 
-            // Ajouter un effet de particules dans le fond
             if (volume > 0.5 && Math.random() > 0.7) {
                 createBackgroundParticle(hue);
             }
@@ -599,22 +625,18 @@
             const particle = document.createElement('div');
             particle.className = 'particle';
 
-            // Position aléatoire
             particle.style.left = `${Math.random() * 100}%`;
             particle.style.top = `${Math.random() * 100}%`;
 
-            // Taille et couleur
             const size = 2 + Math.random() * 8;
             particle.style.width = `${size}px`;
             particle.style.height = `${size}px`;
             particle.style.backgroundColor = `hsl(${hue}, 100%, 70%)`;
 
-            // Animation
             particle.style.animation = `float ${2 + Math.random() * 3}s infinite`;
 
             document.getElementById('particles').appendChild(particle);
 
-            // Supprimer après un certain temps
             setTimeout(() => {
                 particle.remove();
             }, 3000);
@@ -624,45 +646,41 @@
             if (balloon.popped) return;
             balloon.popped = true;
 
-            // Points
             const points = balloon.type === 'bonus' ? BONUS_POINTS : BALLOON_POINTS;
             score += points;
+            
+            poppedBalloonsCount++;
 
-            // Son
             playSound(true, balloon.type === 'bonus');
 
-            // Effet visuel
             createExplosion(balloon.x, balloon.y, balloon.type === 'bonus' ? 1200 : 800);
 
-            // Supprimer le ballon
             balloon.element.remove();
 
             updateScore();
 
-            // Vérifier la fin du jeu
+            if (poppedBalloonsCount >= BALLOONS_TO_POP_TO_WIN) {
+                victory();
+            }
+            
             checkGameEnd();
         }
 
         function createExplosion(x, y, baseHue) {
-            // Créer une explosion de particules
             for (let i = 0; i < 15; i++) {
                 const particle = document.createElement('div');
                 particle.className = 'particle';
 
-                // Position
                 particle.style.left = `${x}px`;
                 particle.style.top = `${y}px`;
 
-                // Taille
                 const size = 3 + Math.random() * 7;
                 particle.style.width = `${size}px`;
                 particle.style.height = `${size}px`;
 
-                // Couleur
                 const hue = baseHue + Math.random() * 60 - 30;
                 particle.style.backgroundColor = `hsl(${hue}, 100%, 70%)`;
 
-                // Animation
                 const angle = Math.random() * Math.PI * 2;
                 const distance = 20 + Math.random() * 50;
                 const duration = 0.5 + Math.random() * 1.5;
@@ -673,7 +691,6 @@
 
                 document.getElementById('particles').appendChild(particle);
 
-                // Supprimer après l'animation
                 setTimeout(() => {
                     particle.remove();
                 }, duration * 1000);
@@ -684,16 +701,12 @@
             if (balloon.popped) return;
             balloon.popped = true;
 
-            // Son
             playSound(false);
 
-            // Effet visuel
             createExplosion(balloon.x, balloon.y, 0);
 
-            // Supprimer le ballon
             balloon.element.remove();
 
-            // Game Over
             endGame();
         }
 
@@ -737,6 +750,17 @@
             }
         }
 
+        function victory() {
+            gameActive = false;
+            clearInterval(timer);
+
+            if (oscillator) {
+                gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+            }
+
+            document.getElementById('victory-screen').classList.remove('hide');
+        }
+
         function updateScore() {
             document.getElementById('score-display').textContent = `Score: ${score}`;
         }
@@ -745,7 +769,7 @@
             const minutes = Math.floor(timeLeft / 60);
             const seconds = timeLeft % 60;
             document.getElementById('timer').textContent =
-                `Temps: ${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+                `Time: ${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
 
             if (timeLeft <= 10) {
                 document.getElementById('timer').style.color = '#FF5252';
@@ -760,21 +784,20 @@
                 gainNode.gain.setValueAtTime(0, audioContext.currentTime);
             }
 
-            alert(`Partie terminée ! Votre score: ${score}`);
+            alert(`Game over! Your score: ${score}`);
             setTimeout(restartGame, 1000);
         }
 
         function restartGame() {
-            // Nettoyer
+            document.getElementById('victory-screen').classList.add('hide');
+            
             document.getElementById('particles').innerHTML = '';
             balloons.forEach(b => b.element.remove());
             balloons = [];
 
-            // Réinitialiser
             initGame();
         }
 
-        // Démarrer le jeu
         window.onload = initGame;
     </script>
 </body>
