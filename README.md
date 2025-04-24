@@ -22,7 +22,7 @@ The app features **three dynamic mini-games**:
 
 🎧 **Frequency Game** – Find an invisible ball using only audio cues.  
 🍷 **Bar Tilt Challenge** – Tilt your phone to fill glasses with precision.  
-🫒 **hits the target !** – Steal the olive without waking the guards!  
+🫒 **Hit the target ** – Hit the target with the tilt of your phone.  
 
 ---
 
