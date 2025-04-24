@@ -8,6 +8,7 @@ body {
     color: white;
     overflow: hidden;
     touch-action: manipulation;
+    background-image: url('https://syloww.github.io/Outdoor-Escape-Game-App-in-Mulhouse/images/fond.png');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
