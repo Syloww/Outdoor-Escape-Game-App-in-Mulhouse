@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
@@ -332,6 +332,9 @@
             font-size: 36px;
             text-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
         }
+        .game-over h2 {
+            color: #4CAF50;
+        }
 
         .level-complete h2 {
             color: #4CAF50;
@@ -468,7 +471,7 @@
 
         .landscape-warning p {
             margin-bottom: 30px;
-            font-size: 20px;
+            font-size: 24px;
         }
 
         @media (orientation: landscape) {
@@ -558,6 +561,31 @@
                 font-size: 14px;
             }
         }
+
+        .voice-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            min-width: 50px;
+        }
+
+        .voice-btn:active {
+            transform: scale(0.95);
+        }
     </style>
 </head>
 
@@ -602,13 +630,13 @@
         </picture>
     </div>
     <div class="landscape-warning">
-        <h2>Rotation requise</h2>
-        <p>Veuillez tourner votre appareil en mode portrait pour jouer.</p>
+        <h2>Rotation required</h2>
+        <p>Please keep your device in portrait mode to play and disable automatic rotation.</p>
     </div>
 
     <div class="info-panel">
         <div class="info-item">
-            <div>Niveau</div>
+            <div>Level</div>
             <span id="level">1</span>
         </div>
         <div class="info-item">
@@ -616,7 +644,7 @@
             <span id="score">0</span>
         </div>
         <div class="info-item">
-            <div>Objectif</div>
+            <div>Goal</div>
             <span id="target">0%</span>
         </div>
     </div>
@@ -641,61 +669,53 @@
     </div>
 
     <div class="buttons-right">
-        <button id="validateBtn">Valider</button>
-        <button id="restartBtn">Rejouer</button>
+        <button id="validateBtn">Confirm</button>
+        <button id="restartBtn">Replay</button>
         <button id="resetBtn">Reset</button>
     </div>
 
     <div class="level-complete">
-        <h2>Réussi!</h2>
-        <p>Précision: <span id="precisionValue">0</span>%</p>
+        <h2>Succesful !</h2>
+        <p>Precision: <span id="precisionValue">0</span>%</p>
         <div class="precision-meter">
             <div id="precisionFill" class="precision-fill"></div>
         </div>
         <p>Score: <span id="finalScore">0</span></p>
-        <button id="continueBtn">Continuer</button>
+        <button id="continueBtn">Continue</button>
     </div>
 
     <div class="level-fail">
-        <h2>Raté!</h2>
-        <p>Objectif: <span id="targetLimit">0</span>%</p>
-        <p>Remplissage: <span id="actualFill">0</span>%</p>
-        <p>Précision: <span id="failPrecision">0</span>%</p>
-        <p>Points perdus: <span id="pointsLost">0</span></p>
-        <button id="retryBtn">Réessayer</button>
+        <h2>Missed !</h2>
+        <p>Goal: <span id="targetLimit">0</span>%</p>
+        <p>Filling: <span id="actualFill">0</span>%</p>
+        <p>Precision: <span id="failPrecision">0</span>%</p>
+        <p>Points lost: <span id="pointsLost">0</span></p>
+        <button id="retryBtn">Retry </button>
     </div>
 
     <div class="game-over">
-        <h2>Félicitations!</h2>
-        <p>Objectif atteint!</p>
-        <p>Score final: <span id="finalTotalScore">0</span></p>
-        <p>Niveaux: <span id="totalLevels">0</span></p>
-        <button id="newGameBtn">Nouvelle Partie</button>
+        <h2>Congratulation !</h2>
+        <p>Objective achieved !</p>
+        <p>Final Score: <span id="finalTotalScore">0</span></p>
+        <p>Level: <span id="totalLevels">0</span></p>
+        <button id="newGameBtn">New game </button>
     </div>
 
     <div class="tutorial">
-        <h2>Précision Verre</h2>
-        <p>Inclinez votre téléphone vers la droite pour verser la bière.</p>
+        <h2>Glass precision</h2>
+        <p>Tilt your phone to the right to pour the beer.</p>
         <div class="tilt-indicator">
             <div class="tilt-handle"></div>
         </div>
-        <p>Atteignez la ligne verte sans dépasser!</p>
-        <p>Objectif: 1000 points.</p>
-        <button id="startBtn">Commencer</button>
+        <p>Reach to the green line without going over !</p>
+        <p>A sound signal will alert you when you are close to the goal.</p>
+        <p>Goal: 1000 points.</p>
+        <button id="startBtn">Start</button>
     </div>
+    <button class="voice-btn" aria-label="Lire le contenu de la page">🔊</button>
 
-    <!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jeu de précision - Remplissage de verre</title>
-    <style>
-        /* Vos styles existants... */
-    </style>
-</head>
-<body>
-    <!-- Votre HTML existant... -->
+
+
 
     <script>
         // Éléments du DOM
@@ -753,23 +773,110 @@
         let gainNode;
         let isSoundPlaying = false;
         let audioInitialized = false;
+        let speechSynthesis = window.speechSynthesis;
+
+        let currentUtterance = null;
+        let proximitySound = null;
+        let proximitySoundPlaying = false;
+        let successSoundBuffer;
+
+        // Fonction pour parler un texte
+        function speak(text, interrupt = true) {
+            if (interrupt && currentUtterance) {
+                speechSynthesis.cancel();
+            }
+
+            if (text) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'en-EN';
+                utterance.rate = 1.0;
+                utterance.pitch = 1.0;
+
+                currentUtterance = utterance;
+                speechSynthesis.speak(utterance);
+            }
+        }
+
+        // Fonction pour lire tout le contenu visible de la page
+        function readAllVisibleText() {
+            // Trouver l'écran actuellement visible
+            let activeScreen = document.querySelector('.level-complete[style*="display: flex"], .level-fail[style*="display: flex"], .game-over[style*="display: flex"], .tutorial[style*="display: flex"]');
+
+            let textToRead = "";
+
+            if (activeScreen) {
+                // Lire le contenu de l'écran actif
+                const title = activeScreen.querySelector('h2');
+                if (title) textToRead += title.textContent + ". ";
+
+                const paragraphs = activeScreen.querySelectorAll('p');
+                paragraphs.forEach(p => {
+                    textToRead += p.textContent + ". ";
+                });
+
+                const buttons = activeScreen.querySelectorAll('button');
+                buttons.forEach(btn => {
+                    textToRead += "Button " + btn.textContent + ". ";
+                });
+            } else {
+                // Lire le contenu du jeu principal
+                textToRead += "Level " + document.getElementById('level').textContent + ". ";
+                textToRead += "Score: " + document.getElementById('score').textContent + ". ";
+                textToRead += "Goal: fill to " + document.getElementById('target').textContent + ". ";
+                textToRead += "Progres: " + document.getElementById('progressBar').textContent + ". ";
+
+                const buttons = document.querySelectorAll('.buttons-right button');
+                buttons.forEach(btn => {
+                    textToRead += "Button " + btn.textContent + ". ";
+                });
+            }
+
+            speak(textToRead);
+        }
+
+        // Écouteur pour le bouton de lecture vocale
+        document.querySelector('.voice-btn').addEventListener('click', readAllVisibleText);
 
         // Initialiser l'audio context après une interaction utilisateur
         function initAudio() {
             if (audioInitialized) return;
 
             try {
+                console.log("Initializing audio...");
                 audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                
+
                 // Charger le son du verre qui se remplit
                 fetch('son/sonEau.mp4')
-                    .then(response => response.arrayBuffer())
-                    .then(arrayBuffer => audioContext.decodeAudioData(arrayBuffer))
+                    .then(response => {
+                        console.log("Got water sound response");
+                        return response.arrayBuffer();
+                    })
+                    .then(arrayBuffer => {
+                        console.log("Decoding water sound...");
+                        return audioContext.decodeAudioData(arrayBuffer);
+                    })
                     .then(decodedAudio => {
+                        console.log("Water sound decoded");
                         audioBuffer = decodedAudio;
+
+                        // Charger le son de succès
+                        console.log("Fetching success sound...");
+                        return fetch('son/ting.mp4');
+                    })
+                    .then(response => {
+                        console.log("Got success sound response");
+                        return response.arrayBuffer();
+                    })
+                    .then(arrayBuffer => {
+                        console.log("Decoding success sound...");
+                        return audioContext.decodeAudioData(arrayBuffer);
+                    })
+                    .then(decodedAudio => {
+                        console.log("Success sound decoded");
+                        successSoundBuffer = decodedAudio;
                         audioInitialized = true;
-                        
-                        // Configurer le gain node
+
+                        console.log("Audio initialized successfully");
                         gainNode = audioContext.createGain();
                         gainNode.gain.value = 0;
                         gainNode.connect(audioContext.destination);
@@ -779,6 +886,53 @@
                     });
             } catch (e) {
                 console.error("Erreur d'initialisation audio:", e);
+            }
+        }
+
+        // Initialiser le son de proximité
+        function initProximitySound() {
+            if (!audioContext) return;
+
+            // Créer un oscillateur pour le son de proximité
+            proximitySound = audioContext.createOscillator();
+            proximitySound.type = 'sine';
+            proximitySound.frequency.value = 440; // Fréquence de base (440Hz = La)
+
+            // Créer un gain pour contrôler le volume
+            const proximityGain = audioContext.createGain();
+            proximityGain.gain.value = 0;
+
+            // Connecter les noeuds
+            proximitySound.connect(proximityGain);
+            proximityGain.connect(audioContext.destination);
+
+            // Démarrer l'oscillateur (mais silencieux pour l'instant)
+            proximitySound.start();
+
+            return proximityGain;
+        }
+
+        function playSuccessSound() {
+            if (!audioInitialized || !audioContext || !successSoundBuffer) {
+                console.log("Audio not ready to play success sound");
+                return;
+            }
+
+            try {
+                const successSource = audioContext.createBufferSource();
+                successSource.buffer = successSoundBuffer;
+
+                const successGain = audioContext.createGain();
+                successGain.gain.value = 0.8; // Augmentez le volume si nécessaire
+
+                successSource.connect(successGain);
+                successGain.connect(audioContext.destination);
+
+                successSource.onended = () => console.log("Success sound finished playing");
+                successSource.start();
+                console.log("Success sound played");
+            } catch (e) {
+                console.error("Error playing success sound:", e);
             }
         }
 
@@ -816,6 +970,18 @@
                 const maxPlaybackRate = 1.5;
                 sourceNode.playbackRate.value = minPlaybackRate + (maxPlaybackRate - minPlaybackRate) * (currentGamma / 90);
             }
+
+            // Jouer un son d'avertissement si on est proche de la cible
+            if (normalizedProximity > 0.7) {
+                // Plus on est proche, plus le son est fréquent
+                const pulseRate = Math.floor(normalizedProximity * 10);
+                const now = Date.now();
+
+                if (now - lastPourTime > 1000 / pulseRate) {
+                    playProximitySound(normalizedProximity);
+                    lastPourTime = now;
+                }
+            }
         }
 
         // Arrêter le son
@@ -841,6 +1007,9 @@
             gameOverScreen.style.display = 'none';
             levelCompleteScreen.style.display = 'none';
             levelFailScreen.style.display = 'none';
+            setTimeout(() => {
+                readScreenContent();
+            }, 500);
 
             setInterval(() => {
                 if (gameActive && parseFloat(targetBeer.style.height) > 10) {
@@ -850,6 +1019,9 @@
                     createBeerBubbles(sourceBeer);
                 }
             }, 1000);
+
+            // Initialiser le son de proximité
+            initProximitySound();
         }
 
         // Créer des bulles de bière
@@ -979,20 +1151,31 @@
             targetBeer.style.height = `${currentTargetHeight}%`;
             updateSound(currentTargetHeight);
 
+            // Vérifier si on atteint la cible
+            const glassHeight = targetGlass.offsetHeight;
+            const targetHeight = glassHeight * (targetPercentage / 100);
+            const currentHeight = glassHeight * (currentTargetHeight / 100);
+            const tolerance = glassHeight * (targetTolerance / 100);
+
+            // Si on est dans la zone cible et qu'on vient juste de l'atteindre
+            if (Math.abs(currentHeight - targetHeight) <= tolerance / 2 &&
+                Math.abs(currentHeight - targetHeight) < Math.abs(lastBeerHeight - targetHeight)) {
+                playSuccessSound();
+            }
+
+            lastBeerHeight = currentHeight;
+
             if (Math.random() < 0.3) {
                 createBeerBubbles(targetBeer);
             }
 
-            const glassHeight = targetGlass.offsetHeight;
-            if ((currentTargetHeight / 100) * glassHeight >
-                (targetPercentage / 100) * glassHeight + (targetTolerance / 100) * glassHeight) {
+            if (currentHeight > targetHeight + tolerance) {
                 gameOver = true;
                 isPouring = false;
                 stopSound();
                 showFailScreen(currentTargetHeight);
             }
         }
-
         // Afficher l'écran d'échec
         function showFailScreen(finalHeight) {
             const glassHeight = targetGlass.offsetHeight;
@@ -1023,6 +1206,11 @@
 
             const maxDistance = glassHeight * 0.3;
             let fillPrecision = Math.max(0, 100 - (distance / maxDistance * 100));
+
+            // Jouer le son de succès si la précision est suffisante
+            if (fillPrecision > 10) {
+                playSuccessSound();
+            }
 
             fillPrecision = Math.min(100, fillPrecision * 1.5);
             const levelScore = Math.floor(fillPrecision * currentLevel * 1.2);
