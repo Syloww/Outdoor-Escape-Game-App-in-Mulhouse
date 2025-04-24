@@ -14,6 +14,27 @@
     <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css" />
     <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            color: white;
+            overflow: hidden;
+            touch-action: manipulation;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            transition: background-image 0.5s ease-in-out;
+        }
+
+        .bg1 { background-image: url('images/image1.png'); }
+        .bg2 { background-image: url('images/image2.png'); }
+        .bg3 { background-image: url('images/image3.png'); }
+        .bg4 { background-image: url('images/image4.png'); }
+
         #map-container {
             display: none;
             position: fixed;
@@ -67,6 +88,7 @@
             border: 2px solid #ddd;
             border-radius: 8px;
             font-family: Arial, sans-serif;
+            color: #333;
         }
 
         .dialogue-link {
@@ -100,24 +122,14 @@
             font-weight: bold;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
             z-index: 1001;
+            color: #333;
         }
 
         .compass {
-            position: absolute;
-            top: 70px;
-            left: 20px;
-            width: 60px;
-            height: 60px;
-            background: rgba(255, 255, 255, 0.9);
-            border-radius: 50%;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-            z-index: 1001;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 24px;
-        }
-
+    width: 80px; /* Augmenter depuis 60px */
+    height: 80px; /* Augmenter depuis 60px */
+    font-size: 28px; /* Augmenter depuis 24px */
+}
         .progress-container {
             width: 100%;
             height: 5px;
@@ -133,12 +145,100 @@
             width: 0%;
             transition: width 0.5s;
         }
+
+        .pigeon-container {
+            position: fixed;
+            bottom: 0px;
+            right: 0px;
+        }
+
+        .pigeon-container img {
+            width: 100px;
+            height: auto;
+            transition: transform 0.3s;
+        }
+
+        
+
+        .dialogue-box {
+            position: fixed;
+            bottom: 150px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            max-width: 600px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border-radius: 10px;
+            color: white;
+            font-size: 18px;
+            text-align: center;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+            z-index: 400;
+        }
+
+        #dialogue-text {
+            line-height: 1.5;
+        }
+
+        .game-button {
+            position: fixed;
+            bottom: 100px;
+            background: #4CAF50;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            text-transform: uppercase;
+            border: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            z-index: 450;
+            display: none;
+        }
+
+        .game-button:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.4);
+        }
+
+        #game1-btn { left: 20px; }
+        #game2-btn { left: 50%; transform: translateX(-50%); }
+        #game3-btn { right: 20px; }
+
+        @media (max-width: 768px) {
+            .dialogue-box {
+                width: 90%;
+                bottom: 120px;
+                font-size: 16px;
+            }
+            
+            .pigeon-container img {
+                width: 80px;
+            }
+            
+            #map {
+                height: 65%;
+            }
+            
+            #instructions {
+                height: 25%;
+            }
+
+            .game-button {
+                padding: 10px 15px;
+                font-size: 14px;
+                bottom: 80px;
+            }
+        }
     </style>
 </head>
 
-<body>
+<body class="bg1">
     <div id="map-container">
-        <button id="close-map">j'y suis</button>
+        <button id="close-map">I'm here</button>
         <div class="distance-indicator" id="distance-indicator">Distance: --</div>
         <div class="compass" id="compass">↑</div>
         <div id="map"></div>
@@ -148,6 +248,10 @@
             </div>
         </div>
     </div>
+
+    <button id="game1-btn" class="game-button">Game 1</button>
+    <button id="game2-btn" class="game-button">Game 2</button>
+    <button id="game3-btn" class="game-button">Game 3</button>
 
     <div class="pigeon-container">
         <img src="images/pigeon.png" alt="pigeon" class="pigeon">
@@ -161,8 +265,7 @@
     <!-- Leaflet Routing Machine JS -->
     <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
     <!-- Leaflet.awesome-markers -->
-    <script
-        src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.min.js"></script>
     <!-- Leaflet.Geolocation -->
     <script src="https://unpkg.com/leaflet.geolocation@1.0.4/dist/leaflet.geolocation.min.js"></script>
 
@@ -173,12 +276,12 @@
             "...but today it's also a place where some mad scientists put this tracking collar on me! I've managed to escape from their lab, but to really be free, I have to deactivate three modules hidden around Mulhouse. And guess what? The first is right here, in this garden full of mysteries. So let's get on with the adventure!",
             "First, off to the <span class='dialogue-link' data-destination='gardenOfFragrance'>Garden of Fragrance</span>! The first module is hidden away in a corner. Use the map to find your way!",
             "Created in 1987, this 1,500 m² garden was designed by ophthalmologist Dr Rolf Benner to help blind and partially sighted people use their sense of smell and touch to find their way around.",
-            "I'm allergic to pollen, so I can hardly see anything. I have to pop all the balloons by following their sound: only the ones that beep sharply! The others are trapped and spread pollen. By ear and sneezing, I pop them one by one until the last one explodes.",
+            "I'm allergic to pollen, so I can hardly see anything. I have to pop all the balloons by following their sound: only the ones that beep sharply! The others are trapped and spread pollen. By ear and sneezing, I pop them one by one until the last one explodes.<span id='game1-trigger'></span>",
             "Yippee! I did it! Thanks for helping me!!! Now head to the <span class='dialogue-link' data-destination='gambrinus'>Gambrinus</span>!",
-            "Here I am in front of the Gambrinus, the liveliest bar in Mulhouse. My sensor is flashing: to deactivate it, you have to pour EXACTLY the right amount into the marked glass!",
+            "Here I am in front of the Gambrinus, the liveliest bar in Mulhouse. My sensor is flashing: to deactivate it, you have to pour EXACTLY the right amount into the marked glass!<span id='game2-trigger'></span>",
             "Yippee! I did it! Thank you for helping me! Finally, meet me at the <span class='dialogue-link' data-destination='placeReunion'>Place de la Réunion</span> opposite the historical museum.",
             "The statue on the Place de la Réunion in Mulhouse represents William Tell, the legendary Swiss hero. According to tradition, he was forced by the Austrian governor Gessler to shoot an arrow at an apple placed on his son's head. His perfect shot made him a symbol of resistance and freedom. This statue is a reminder of the historic links between Mulhouse and Switzerland, before the town joined France in 1798.",
-            "I've almost done it! The collar is half deactivated, but to blow it up DEFINITELY, I still have to do the ultimate test: The Dart Shot",
+            "I've almost done it! The collar is half deactivated, but to blow it up DEFINITELY, I still have to do the ultimate test: The Dart Shot<span id='game3-trigger'></span>",
             "Yippee! I did it! Thank you for helping me!!! Now I'm going back to my life as a heroic pigeon! Maybe one day we'll meet up again for a new adventure... In the meantime, stay smart like a pigeon!"
         ];
 
@@ -195,7 +298,7 @@
         let currentHeading = 0;
         let currentDestination = null;
 
-        // Coordonnées des points d'intérêt
+        // Points of interest coordinates
         const pointsOfInterest = {
             mirrorDoor: {
                 coords: [47.748381528597086, 7.333458419631289],
@@ -213,57 +316,50 @@
                 icon: "beer"
             },
             placeReunion: {
-                coords: [47, 74663, 7, 3393],
+                coords: [47.74663, 7.3393],
                 name: "Place de la Réunion",
                 icon: "landmark"
             }
         };
 
         function initMap() {
-            // Créer la carte centrée sur la destination
             map = L.map('map', {
                 zoomControl: false,
                 doubleClickZoom: false,
                 closePopupOnClick: false
             }).setView(pointsOfInterest.mirrorDoor.coords, 18);
 
-            // Ajouter la couche de tuiles OpenStreetMap avec un style plus contrasté
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
                 maxZoom: 19
             }).addTo(map);
 
-            // Ajouter un contrôle de zoom personnalisé
             L.control.zoom({
                 position: 'topright'
             }).addTo(map);
 
-            // Démarrer le suivi GPS
             startGPSTracking();
         }
 
         function startGPSTracking() {
             if (navigator.geolocation) {
-                // Options pour une haute précision
                 const options = {
                     enableHighAccuracy: true,
                     timeout: 10000,
                     maximumAge: 0
                 };
 
-                // Démarrer le watchPosition pour un suivi continu
                 watchId = navigator.geolocation.watchPosition(
                     position => updatePosition(position),
                     error => handleGeolocationError(error),
                     options
                 );
 
-                // Écouter l'orientation du dispositif si disponible
                 if (window.DeviceOrientationEvent) {
                     window.addEventListener('deviceorientation', handleOrientation);
                 }
             } else {
-                alert("La géolocalisation n'est pas supportée par votre navigateur.");
+                alert("Geolocation is not supported by your browser.");
                 map.setView(pointsOfInterest.mirrorDoor.coords, 15);
             }
         }
@@ -272,7 +368,6 @@
             const userCoords = [position.coords.latitude, position.coords.longitude];
             const accuracy = position.coords.accuracy;
 
-            // Mettre à jour le marqueur de position
             if (!userMarker) {
                 userMarker = L.marker(userCoords, {
                     icon: L.AwesomeMarkers.icon({
@@ -282,10 +377,9 @@
                     }),
                     zIndexOffset: 1000
                 }).addTo(map)
-                    .bindPopup("<b>Votre position</b>")
+                    .bindPopup("<b>Your position</b>")
                     .openPopup();
 
-                // Ajouter un cercle de précision
                 accuracyCircle = L.circle(userCoords, {
                     color: '#4285F4',
                     fillColor: '#4285F4',
@@ -293,7 +387,6 @@
                     radius: accuracy
                 }).addTo(map);
 
-                // Calculer l'itinéraire initial vers la destination actuelle
                 const destination = currentDestination ? currentDestination.coords : pointsOfInterest.mirrorDoor.coords;
                 calculateRoute(userCoords, destination);
             } else {
@@ -301,10 +394,8 @@
                 accuracyCircle.setLatLng(userCoords).setRadius(accuracy);
             }
 
-            // Mettre à jour la distance
             updateDistance(userCoords, currentDestination ? currentDestination.coords : pointsOfInterest.mirrorDoor.coords);
 
-            // Recentrer légèrement la carte si nécessaire
             if (!isMapOpen) {
                 const destination = currentDestination ? currentDestination.coords : pointsOfInterest.mirrorDoor.coords;
                 const newCenter = L.latLng(
@@ -319,15 +410,13 @@
             const distance = map.distance(userCoords, destinationCoords);
             remainingDistance = distance;
 
-            // Mettre à jour l'affichage de la distance
             const distanceElement = document.getElementById('distance-indicator');
             if (distance < 1000) {
-                distanceElement.textContent = `Distance: ${Math.round(distance)} mètres`;
+                distanceElement.textContent = `Distance: ${Math.round(distance)} meters`;
             } else {
                 distanceElement.textContent = `Distance: ${(distance / 1000).toFixed(1)} km`;
             }
 
-            // Mettre à jour la barre de progression
             if (totalDistance > 0) {
                 const progress = Math.max(0, Math.min(100, 100 - (distance / totalDistance * 100)));
                 document.getElementById('progress-bar').style.width = `${progress}%`;
@@ -363,7 +452,6 @@
                 map.removeControl(routingControl);
             }
 
-            // Configurer le contrôle d'itinéraire
             routingControl = L.Routing.control({
                 waypoints: [
                     L.latLng(startCoords[0], startCoords[1]),
@@ -376,14 +464,13 @@
                 collapsible: true,
                 addWaypoints: false,
                 draggableWaypoints: false,
-                language: 'fr',
+                language: 'en',
                 lineOptions: {
                     styles: [{ color: '#4285F4', opacity: 0.9, weight: 6 }]
                 },
                 createMarker: () => null
             }).addTo(map);
 
-            // Écouter les événements de routage
             routingControl.on('routesfound', function (e) {
                 const routes = e.routes;
                 if (routes && routes.length > 0) {
@@ -393,7 +480,6 @@
                     currentRouteInstructions = instructions;
                     updateInstructionPanel(instructions, 0);
 
-                    // Vérifier périodiquement la position
                     setInterval(() => checkProgress(userMarker.getLatLng(), instructions, endCoords), 3000);
                 }
             });
@@ -401,7 +487,6 @@
 
         function updateInstructionPanel(instructions, currentStepIndex) {
             const instructionsContainer = document.getElementById('instructions');
-            // Garder la barre de progression
             const progressBar = instructionsContainer.querySelector('.progress-container');
             instructionsContainer.innerHTML = '';
             if (progressBar) instructionsContainer.appendChild(progressBar);
@@ -410,7 +495,6 @@
                 const stepDiv = document.createElement('div');
                 stepDiv.className = `instruction-step ${index === currentStepIndex ? 'current-step' : ''}`;
 
-                // Formater la distance
                 let distanceText = '';
                 if (instruction.distance > 1000) {
                     distanceText = ` (${(instruction.distance / 1000).toFixed(1)} km)`;
@@ -422,7 +506,6 @@
                 instructionsContainer.appendChild(stepDiv);
             });
 
-            // Faire défiler jusqu'à l'étape actuelle
             const currentStep = instructionsContainer.querySelector('.current-step');
             if (currentStep) {
                 currentStep.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -432,7 +515,6 @@
         function checkProgress(currentPos, instructions, destinationCoords) {
             if (!instructions || instructions.length === 0) return;
 
-            // Trouver l'étape la plus proche
             let closestInstruction = 0;
             let minDistance = Infinity;
 
@@ -444,13 +526,21 @@
                 }
             });
 
-            // Mettre à jour le panneau d'instructions si on est proche d'une nouvelle étape
-            if (minDistance < 30) { // 30m de seuil
+            if (minDistance < 30) {
                 updateInstructionPanel(instructions, closestInstruction);
             }
         }
 
-        // Modifier le gestionnaire du bouton "j'y suis"
+        function showGameButton(buttonId) {
+            document.getElementById(buttonId).style.display = 'block';
+        }
+
+        function hideAllGameButtons() {
+            document.querySelectorAll('.game-button').forEach(btn => {
+                btn.style.display = 'none';
+            });
+        }
+
         document.getElementById('close-map').addEventListener('click', function () {
             if (currentDestination && currentDestination.name === "Place de la Réunion") {
                 window.location.href = "salim.html";
@@ -460,25 +550,24 @@
         });
 
         function handleGeolocationError(error) {
-            let message = "Erreur de géolocalisation : ";
+            let message = "Geolocation error: ";
             switch (error.code) {
                 case error.PERMISSION_DENIED:
-                    message += "Vous avez refusé la géolocalisation. Activez-la dans les paramètres de votre navigateur.";
+                    message += "You denied geolocation. Please enable it in your browser settings.";
                     break;
                 case error.POSITION_UNAVAILABLE:
-                    message += "La position n'a pas pu être déterminée. Vérifiez votre connexion.";
+                    message += "Position unavailable. Check your connection.";
                     break;
                 case error.TIMEOUT:
-                    message += "La requête a expiré. Essayez dans une zone avec meilleure réception.";
+                    message += "Request timed out. Try in an area with better reception.";
                     break;
                 default:
-                    message += "Erreur inconnue.";
+                    message += "Unknown error.";
             }
 
             alert(message);
             map.setView(pointsOfInterest.mirrorDoor.coords, 15);
 
-            // Afficher quand même l'itinéraire depuis le centre-ville par défaut
             const defaultStart = [47.7465, 7.3390];
             calculateRoute(defaultStart);
         }
@@ -488,13 +577,11 @@
             document.getElementById('map-container').style.display = 'flex';
             if (!map) {
                 initMap();
-            } else {
-                // Recentrer sur la position utilisateur si disponible
-                if (userMarker) {
-                    map.setView(userMarker.getLatLng(), 18);
-                }
+            } else if (userMarker) {
+                map.setView(userMarker.getLatLng(), 18);
             }
             clearTimeout(typingTimeout);
+            hideAllGameButtons();
         }
 
         function showMapWithDestination(destinationKey) {
@@ -506,14 +593,12 @@
                 initMap();
             }
 
-            // Supprimer tous les marqueurs existants sauf userMarker
             map.eachLayer(layer => {
                 if (layer instanceof L.Marker && layer !== userMarker) {
                     map.removeLayer(layer);
                 }
             });
 
-            // Ajouter uniquement le marqueur de destination
             L.marker(currentDestination.coords, {
                 icon: L.AwesomeMarkers.icon({
                     icon: currentDestination.icon,
@@ -527,11 +612,9 @@
 
             map.setView(currentDestination.coords, 18);
 
-            // Si on a une position utilisateur, calculer l'itinéraire
             if (userMarker) {
                 calculateRoute(userMarker.getLatLng(), currentDestination.coords);
             } else {
-                // Sinon, montrer juste la destination
                 if (routingControl) {
                     map.removeControl(routingControl);
                     routingControl = null;
@@ -539,11 +622,22 @@
             }
 
             clearTimeout(typingTimeout);
+            hideAllGameButtons();
         }
 
         function hideMap() {
             isMapOpen = false;
             document.getElementById('map-container').style.display = 'none';
+            
+            // Restore appropriate background
+            switch(phraseIndex) {
+                case 0: document.body.className = 'bg1'; break;
+                case 3: document.body.className = 'bg2'; break;
+                case 6: document.body.className = 'bg3'; break;
+                case 9: document.body.className = 'bg4'; break;
+                default: document.body.className = '';
+            }
+            
             if (phraseIndex < phrases.length && charIndex < phrases[phraseIndex].length) {
                 typeWriter();
             }
@@ -566,9 +660,18 @@
             if (isMapOpen) return;
 
             isTyping = true;
+            
+            // Set appropriate background
+            switch(phraseIndex) {
+                case 0: document.body.className = 'bg1'; break;
+                case 3: document.body.className = 'bg2'; break;
+                case 6: document.body.className = 'bg3'; break;
+                case 9: document.body.className = 'bg4'; break;
+                default: document.body.className = '';
+            }
+
             if (phraseIndex < phrases.length) {
                 if (charIndex < phrases[phraseIndex].length) {
-                    // Gestion spéciale pour les phrases avec liens
                     if ([3, 6, 8].includes(phraseIndex)) {
                         const fullText = phrases[phraseIndex];
                         const linkStart = fullText.indexOf("<span");
@@ -592,7 +695,6 @@
                             charIndex++;
                         }
                     } else if (phraseIndex === 0) {
-                        // Gestion spéciale pour la première phrase
                         const baseText = "Before I tell you my story, come and see me at the ";
                         const linkText = "mirror door";
 
@@ -616,7 +718,6 @@
                             }
                         }
                     } else {
-                        // Texte normal sans liens
                         dialogueElement.innerHTML = phrases[phraseIndex].substring(0, charIndex + 1);
                         charIndex++;
                     }
@@ -624,7 +725,18 @@
                     typingTimeout = setTimeout(typeWriter, 30);
                 } else {
                     isTyping = false;
-                    // Ajouter les écouteurs d'événements pour les liens
+                    
+                    // Show appropriate game button
+                    if (phraseIndex === 5) {
+                        showGameButton('game1-btn');
+                    } else if (phraseIndex === 7) {
+                        showGameButton('game2-btn');
+                    } else if (phraseIndex === 10) {
+                        showGameButton('game3-btn');
+                    } else {
+                        hideAllGameButtons();
+                    }
+
                     if (phraseIndex === 0) {
                         const link = document.getElementById('mirror-door-link');
                         if (link) {
@@ -649,6 +761,8 @@
 
         function nextPhrase() {
             if (isMapOpen) return;
+
+            hideAllGameButtons();
 
             if (isTyping) {
                 if (phraseIndex === 0) {
@@ -693,7 +807,19 @@
             setTimeout(typeWriter, 500);
             document.getElementById('close-map').addEventListener('click', hideMap);
 
-            // Détection de la plateforme pour ajuster l'interface
+            // Setup game buttons
+            document.getElementById('game1-btn').addEventListener('click', () => {
+                window.location.href = 'sakina.html';
+            });
+
+            document.getElementById('game2-btn').addEventListener('click', () => {
+                window.location.href = 'sacha.html';
+            });
+
+            document.getElementById('game3-btn').addEventListener('click', () => {
+                window.location.href = 'salim.html';
+            });
+
             if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
                 document.getElementById('map').style.height = '65%';
                 document.getElementById('instructions').style.height = '25%';
@@ -707,5 +833,4 @@
         document.addEventListener('click', nextPhrase);
     </script>
 </body>
-
 </html>
