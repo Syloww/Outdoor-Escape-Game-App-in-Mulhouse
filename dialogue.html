@@ -13,226 +13,11 @@
     <!-- Leaflet.awesome-markers -->
     <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css" />
+    <!-- css -->
+    <link rel="stylesheet" href="styles/dialogue.css">
+
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            color: white;
-            overflow: hidden;
-            touch-action: manipulation;
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            transition: background-image 0.5s ease-in-out;
-        }
-
-        .bg1 { background-image: url('images/image1.png'); }
-        .bg2 { background-image: url('images/image2.png'); }
-        .bg3 { background-image: url('images/image3.png'); }
-        .bg4 { background-image: url('images/image4.png'); }
-
-        #map-container {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.9);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-        }
-
-        #map {
-            width: 95%;
-            height: 75%;
-            border: 3px solid #4a90e2;
-            border-radius: 8px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
-        }
-
-        #close-map {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: #ff4757;
-            color: white;
-            border: none;
-            padding: 12px 18px;
-            cursor: pointer;
-            font-weight: bold;
-            border-radius: 5px;
-            font-size: 16px;
-            transition: all 0.3s;
-            z-index: 900;
-        }
-
-        #close-map:hover {
-            background: #ff6b81;
-            transform: scale(1.05);
-        }
-
-        #instructions {
-            width: 95%;
-            height: 20%;
-            background: white;
-            margin-top: 10px;
-            padding: 15px;
-            overflow-y: auto;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            font-family: Arial, sans-serif;
-            color: #333;
-        }
-
-        .dialogue-link {
-            color: #4a90e2;
-            text-decoration: underline;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        .instruction-step {
-            margin-bottom: 8px;
-            padding: 8px;
-            border-bottom: 1px solid #eee;
-            transition: all 0.3s;
-        }
-
-        .current-step {
-            font-weight: bold;
-            background-color: #e6f2ff;
-            border-left: 4px solid #4a90e2;
-            padding-left: 12px;
-        }
-
-        .distance-indicator {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            background: rgba(255, 255, 255, 0.9);
-            padding: 10px 15px;
-            border-radius: 5px;
-            font-weight: bold;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-            z-index: 1001;
-            color: #333;
-        }
-
-        .compass {
-    width: 80px; /* Augmenter depuis 60px */
-    height: 80px; /* Augmenter depuis 60px */
-    font-size: 28px; /* Augmenter depuis 24px */
-}
-        .progress-container {
-            width: 100%;
-            height: 5px;
-            background: #eee;
-            margin-top: 5px;
-            border-radius: 5px;
-            overflow: hidden;
-        }
-
-        .progress-bar {
-            height: 100%;
-            background: #4a90e2;
-            width: 0%;
-            transition: width 0.5s;
-        }
-
-        .pigeon-container {
-            position: fixed;
-            bottom: 0px;
-            right: 0px;
-        }
-
-        .pigeon-container img {
-            width: 100px;
-            height: auto;
-            transition: transform 0.3s;
-        }
-
-        
-
-        .dialogue-box {
-            position: fixed;
-            bottom: 150px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 80%;
-            max-width: 600px;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 20px;
-            border-radius: 10px;
-            color: white;
-            font-size: 18px;
-            text-align: center;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
-            z-index: 400;
-        }
-
-        #dialogue-text {
-            line-height: 1.5;
-        }
-
-        .game-button {
-            position: fixed;
-            bottom: 100px;
-            background: #4CAF50;
-            color: white;
-            padding: 12px 24px;
-            border-radius: 25px;
-            cursor: pointer;
-            font-weight: bold;
-            text-transform: uppercase;
-            border: none;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-            transition: all 0.3s ease;
-            z-index: 450;
-            display: none;
-        }
-
-        .game-button:hover {
-            background: #45a049;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.4);
-        }
-
-        #game1-btn { left: 20px; }
-        #game2-btn { left: 50%; transform: translateX(-50%); }
-        #game3-btn { right: 20px; }
-
-        @media (max-width: 768px) {
-            .dialogue-box {
-                width: 90%;
-                bottom: 120px;
-                font-size: 16px;
-            }
-            
-            .pigeon-container img {
-                width: 80px;
-            }
-            
-            #map {
-                height: 65%;
-            }
-            
-            #instructions {
-                height: 25%;
-            }
-
-            .game-button {
-                padding: 10px 15px;
-                font-size: 14px;
-                bottom: 80px;
-            }
-        }
+      
     </style>
 </head>
 
@@ -265,7 +50,8 @@
     <!-- Leaflet Routing Machine JS -->
     <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
     <!-- Leaflet.awesome-markers -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.min.js"></script>
+    <script
+        src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.min.js"></script>
     <!-- Leaflet.Geolocation -->
     <script src="https://unpkg.com/leaflet.geolocation@1.0.4/dist/leaflet.geolocation.min.js"></script>
 
@@ -628,16 +414,16 @@
         function hideMap() {
             isMapOpen = false;
             document.getElementById('map-container').style.display = 'none';
-            
+
             // Restore appropriate background
-            switch(phraseIndex) {
+            switch (phraseIndex) {
                 case 0: document.body.className = 'bg1'; break;
                 case 3: document.body.className = 'bg2'; break;
                 case 6: document.body.className = 'bg3'; break;
                 case 9: document.body.className = 'bg4'; break;
                 default: document.body.className = '';
             }
-            
+
             if (phraseIndex < phrases.length && charIndex < phrases[phraseIndex].length) {
                 typeWriter();
             }
@@ -660,9 +446,9 @@
             if (isMapOpen) return;
 
             isTyping = true;
-            
+
             // Set appropriate background
-            switch(phraseIndex) {
+            switch (phraseIndex) {
                 case 0: document.body.className = 'bg1'; break;
                 case 3: document.body.className = 'bg2'; break;
                 case 6: document.body.className = 'bg3'; break;
@@ -725,7 +511,7 @@
                     typingTimeout = setTimeout(typeWriter, 30);
                 } else {
                     isTyping = false;
-                    
+
                     // Show appropriate game button
                     if (phraseIndex === 5) {
                         showGameButton('game1-btn');
@@ -833,4 +619,5 @@
         document.addEventListener('click', nextPhrase);
     </script>
 </body>
+
 </html>
