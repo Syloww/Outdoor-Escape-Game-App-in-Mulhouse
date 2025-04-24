@@ -574,6 +574,15 @@
                 charIndex = phrases[phraseIndex].length;
                 isTyping = false;
                 clearTimeout(typingTimeout);
+
+                // Show game button immediately after skipping if applicable
+                if (phraseIndex === 5) {
+                    showGameButton('game1-btn');
+                } else if (phraseIndex === 7) {
+                    showGameButton('game2-btn');
+                } else if (phraseIndex === 10) {
+                    showGameButton('game3-btn');
+                }
                 return;
             }
 

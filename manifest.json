@@ -1,9 +1,9 @@
 {
-  "name": "PWA",
-  "short_name": "PWA",
+  "name": "Escape Game App in Mulhouse",
+  "short_name": "EscapeGame Mulhouse",
   "theme_color": "#2196f3",
   "background_color": "#2196f3",
-  "description": "Ceci est une PWA",
+  "description": "Introduction Background of the Project Total immersion in Mulhouse, without the need for augmented reality.",
   "display": "standalone",
   "Scope": "/",
   "start_url": "/?utm_source=launcher",
