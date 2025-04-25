@@ -9,7 +9,10 @@ self.addEventListener("install", function (event) {
 					'/',
 					'/index.html',
 					'/manifest.json',
-					'/salim.html'
+					'/dialogue.html',
+					'/salim.html',
+					'/sakina.html',
+					'/sacha.html'
 				]);
 			})
 	);
