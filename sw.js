@@ -13,11 +13,7 @@ self.addEventListener("install", function(event) {
 		  '/sakina.html',
 		  '/sacha.html',
 		  '/dialogue.html'
-
         ]);
-      })
-      .catch(function(err) {
-        console.error('Erreur pendant le cache des fichiers :', err);
       })
   );
 });
