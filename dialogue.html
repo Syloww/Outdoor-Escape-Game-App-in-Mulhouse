@@ -51,10 +51,11 @@
     <!-- Leaflet Routing Machine JS -->
     <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
     <!-- Leaflet.awesome-markers -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.min.js"></script>
+    <script
+        src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.min.js"></script>
     <!-- Leaflet.Geolocation -->
     <script src="https://unpkg.com/leaflet.geolocation@1.0.4/dist/leaflet.geolocation.min.js"></script>
-    
+
     <script>
         const phrases = [
             "Before I tell you my story, come and see me at the mirror door.",
@@ -598,6 +599,18 @@
             phraseIndex++;
             charIndex = 0;
             dialogueElement.innerHTML = '';
+
+            // Ajout de la redirection après le dernier message
+            if (phraseIndex >= phrases.length) {
+                // Nettoyer avant de rediriger
+                cleanupMap();
+                // Rediriger vers la page d'accueil après un court délai
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 1000);
+                return;
+            }
+
             if (phraseIndex < phrases.length) {
                 typeWriter();
             }
