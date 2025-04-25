@@ -89,6 +89,19 @@
         <button onclick="window.location.href='dialogue.html?continueFrom=11'">Continue Story</button>        </div>
     </div>
 
+
+    <script>
+        // Enregistrement du Service Worker
+        if ('serviceWorker' in navigator) {
+          window.addEventListener('load', function() {
+            navigator.serviceWorker.register('/sw.js').then(function(registration) {
+              console.log('ServiceWorker registered with scope: ', registration.scope);
+            }, function(err) {
+              console.log('ServiceWorker registration failed: ', err);
+            });
+          });
+        }
+      </script>
     <script>
         document.querySelector("#tutobouton").addEventListener("click", function () {
             document.querySelector(".tuto").classList.toggle("cacher");
