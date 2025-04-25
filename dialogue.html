@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="EscapeGame Mulhouse - [Add more descriptive text about your escape game here]">
+    <meta name="description" content="EscapeGame Mulhouse - Aventure interactive avec un pigeon à Mulhouse">
     <title>EscapeGame Mulhouse</title>
     
     <!-- Preconnect to CDNs for faster loading -->
@@ -50,8 +50,7 @@
     <!-- Leaflet Routing Machine JS -->
     <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
     <!-- Leaflet.awesome-markers -->
-    <script
-        src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.min.js"></script>
     <!-- Leaflet.Geolocation -->
     <script src="https://unpkg.com/leaflet.geolocation@1.0.4/dist/leaflet.geolocation.min.js"></script>
 
@@ -107,6 +106,15 @@
                 icon: "landmark"
             }
         };
+
+        // Gestion de la progression depuis l'URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const continueFrom = urlParams.get('continueFrom');
+        if (continueFrom) {
+            phraseIndex = parseInt(continueFrom);
+            if (phraseIndex >= phrases.length) phraseIndex = phrases.length - 1;
+            charIndex = 0;
+        }
 
         function initMap() {
             map = L.map('map', {
@@ -328,11 +336,7 @@
         }
 
         document.getElementById('close-map').addEventListener('click', function () {
-            if (currentDestination && currentDestination.name === "Place de la Réunion") {
-                window.location.href = "salim.html";
-            } else {
-                hideMap();
-            }
+            hideMap();
         });
 
         function handleGeolocationError(error) {
@@ -604,15 +608,15 @@
 
             // Setup game buttons
             document.getElementById('game1-btn').addEventListener('click', () => {
-                window.location.href = 'sakina.html';
+                window.location.href = 'sakina.html?returnTo=6';
             });
 
             document.getElementById('game2-btn').addEventListener('click', () => {
-                window.location.href = 'sacha.html';
+                window.location.href = 'sacha.html?returnTo=8';
             });
 
             document.getElementById('game3-btn').addEventListener('click', () => {
-                window.location.href = 'salim.html';
+                window.location.href = 'salim.html?returnTo=11';
             });
 
             if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
