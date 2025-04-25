@@ -7,6 +7,47 @@
     <meta name="description" content="EscapeGame Mulhouse">
     <title>EscapeGame Mulhouse</title>
     <link rel="stylesheet" href="styles/salim.css">
+    <style>
+        .timer {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 24px;
+            color: white;
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 5px;
+            font-family: Arial, sans-serif;
+        }
+        
+        .game-over {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 32px;
+            z-index: 100;
+            display: none;
+        }
+        
+        .game-over button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
 </head>
 
 <body>
@@ -19,7 +60,8 @@
         <div class="tuto-contenu">
             <h1>Tuto</h1>
             <p>Visez la cible en inclinant le téléphone</p>
-            <p>En fonction de l'endroit toucher le score diminue ou augmente.</p>
+            <p>En fonction de l'endroit touché le score augmente plus ou moins.</p>
+            <p>Vous avez 60 secondes pour faire le meilleur score possible !</p>
             <p>Bon jeu !</p>
         </div>
     </section>
@@ -29,24 +71,23 @@
         <div id="target"></div>
         <div id="crosshair"></div>
         <div id="dart"></div>
+        <div class="timer" id="timer">60</div>
         <section class="panel">
             <div id="scorePanel">
                 Score: <span id="scoreDisplay">0</span><br>
                 Dernier tir: <span id="lastShot">-</span>
             </div>
-            <div id="levelPanel">
-                Niveau: <span id="levelDisplay">1</span><br>
-                Prochain niveau: <span id="nextLevel">100</span>
-            </div>
         </section>
 
         <div id="instructions">Cliquez pour activer le son<br>Bougez votre téléphone pour viser<br>Tapez pour tirer
         </div>
-        <div id="progressContainer">
-            <div id="progressBar"></div>
-        </div>
     </div>
 
+    <div class="game-over" id="gameOver">
+        <h1>Game Over!</h1>
+        <p>Votre score final: <span id="finalScore">0</span></p>
+        <button id="restartButton">Rejouer</button>
+    </div>
 
     <script>
         document.querySelector("#tutobouton").addEventListener("click", function () {
@@ -61,9 +102,10 @@
         let oscillator;
         let gainNode;
         let soundEnabled = false;
-        let level = 1;
-        let nextLevelThreshold = 100;
         let lastShotPoints = 0;
+        let timeLeft = 60;
+        let timerInterval;
+        let gameActive = false;
 
         // Éléments du DOM
         const gameContainer = document.getElementById('gameContainer');
@@ -72,10 +114,11 @@
         const crosshair = document.getElementById('crosshair');
         const scoreDisplay = document.getElementById('scoreDisplay');
         const lastShotDisplay = document.getElementById('lastShot');
-        const levelDisplay = document.getElementById('levelDisplay');
-        const nextLevelDisplay = document.getElementById('nextLevel');
         const instructions = document.getElementById('instructions');
-        const progressBar = document.getElementById('progressBar');
+        const timerElement = document.getElementById('timer');
+        const gameOverScreen = document.getElementById('gameOver');
+        const finalScoreElement = document.getElementById('finalScore');
+        const restartButton = document.getElementById('restartButton');
 
         // Position de la cible
         let targetX = 0;
@@ -87,12 +130,22 @@
 
         // Initialisation du jeu
         function initGame() {
+            // Réinitialiser les variables
+            score = 0;
+            timeLeft = 60;
+            gameActive = true;
+            
+            // Masquer l'écran de fin de jeu
+            gameOverScreen.style.display = 'none';
+            
             // Position initiale de la cible
             targetX = window.innerWidth / 2;
             targetY = window.innerHeight / 2;
-
-            // Mise à jour de l'affichage du niveau
-            updateLevelDisplay();
+            
+            // Mise à jour de l'affichage
+            scoreDisplay.textContent = score;
+            lastShotDisplay.textContent = '-';
+            timerElement.textContent = timeLeft;
 
             // Écouteurs d'événements
             if (window.DeviceOrientationEvent) {
@@ -106,9 +159,15 @@
                     soundEnabled = true;
                     initAudio();
                     instructions.textContent = "Bougez votre téléphone pour viser\nTapez pour tirer";
+                    
+                    // Démarrer le timer quand le son est activé
+                    startTimer();
                     return;
                 }
-                shootDart();
+                
+                if (gameActive) {
+                    shootDart();
+                }
             });
 
             // Masquer les instructions après 5 secondes
@@ -119,8 +178,46 @@
                 }, 1000);
             }, 5000);
 
+            // Bouton de redémarrage
+            restartButton.addEventListener('click', function() {
+                initGame();
+            });
+
             // Animation du jeu
             gameLoop();
+        }
+
+        // Démarrer le timer
+        function startTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+            }
+            
+            timerInterval = setInterval(function() {
+                timeLeft--;
+                timerElement.textContent = timeLeft;
+                
+                if (timeLeft <= 0) {
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        // Fin du jeu
+        function endGame() {
+            gameActive = false;
+            clearInterval(timerInterval);
+            
+            // Afficher l'écran de fin de jeu
+            finalScoreElement.textContent = score;
+            gameOverScreen.style.display = 'flex';
+            
+            // Arrêter l'audio
+            if (oscillator) {
+                oscillator.stop();
+                oscillator.disconnect();
+                oscillator = null;
+            }
         }
 
         // Initialisation de l'audio
@@ -135,54 +232,9 @@
             }
         }
 
-        // Mise à jour de l'affichage du niveau
-        function updateLevelDisplay() {
-            levelDisplay.textContent = level;
-            nextLevelDisplay.textContent = nextLevelThreshold;
-            progressBar.style.width = `${(score / nextLevelThreshold) * 100}%`;
-        }
-
-        function checkLevelUp() {
-            if (score >= nextLevelThreshold) {
-                level++;
-                nextLevelThreshold = Math.floor(nextLevelThreshold * 1.5); // Augmentation progressive
-                updateLevelDisplay();
-
-                // Réduire légèrement la taille de la cible pour augmenter la difficulté
-                const newSize = Math.max(120, 180 - (level * 5));
-                target.style.width = `${newSize}px`;
-                target.style.height = `${newSize}px`;
-
-                // Feedback visuel
-                const levelUpPopup = document.createElement('div');
-                levelUpPopup.className = 'scorePopup';
-                levelUpPopup.textContent = `Niveau ${level} !`;
-                levelUpPopup.style.left = `${targetX}px`;
-                levelUpPopup.style.top = `${targetY}px`;
-                gameContainer.appendChild(levelUpPopup);
-
-                setTimeout(() => {
-                    gameContainer.removeChild(levelUpPopup);
-                }, 1500);
-
-                // Vérifier si le score atteint 100 pour rediriger
-                if (score >= 100) {
-                    const victoryPopup = document.createElement('div');
-                    victoryPopup.className = 'victoryPopup';
-                    victoryPopup.textContent = 'Félicitations! Vous avez gagné!';
-                    gameContainer.appendChild(victoryPopup);
-
-                    setTimeout(() => {
-                        // Rediriger vers la page de dialogue
-                        window.location.href = "dialogue.html";
-                    }, 3000);
-                }
-            }
-        }
-
         // Gestion de l'orientation du téléphone
         function handleOrientation(event) {
-            if (!soundEnabled) return;
+            if (!soundEnabled || !gameActive) return;
 
             const beta = event.beta;
             const gamma = event.gamma;
@@ -206,7 +258,7 @@
         }
 
         function updateAudioFeedback() {
-            if (!audioContext || !canShoot) return;
+            if (!audioContext || !canShoot || !gameActive) return;
 
             const dx = crosshairX - targetX;
             const dy = crosshairY - targetY;
@@ -235,7 +287,7 @@
         }
 
         function shootDart() {
-            if (!canShoot || !soundEnabled) return;
+            if (!canShoot || !soundEnabled || !gameActive) return;
 
             canShoot = false;
             vibrate(50);
@@ -262,9 +314,6 @@
                 score += lastShotPoints;
                 scoreDisplay.textContent = score;
                 lastShotDisplay.textContent = lastShotPoints;
-
-                // Vérifier si on passe au niveau suivant
-                checkLevelUp();
 
                 // Afficher le score du tir
                 const scorePopup = document.createElement('div');
