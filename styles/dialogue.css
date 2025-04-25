@@ -153,7 +153,7 @@ body {
 }
 
 .pigeon-container img {
-    width: 100px;
+    width: 100%;
     height: auto;
     transition: transform 0.3s;
 }
@@ -215,30 +215,4 @@ body {
 
 #game3-btn {
     right: 20px;
-}
-
-@media (max-width: 768px) {
-    .dialogue-box {
-        width: 90%;
-        bottom: 120px;
-        font-size: 16px;
-    }
-
-    .pigeon-container img {
-        width: 80px;
-    }
-
-    #map {
-        height: 65%;
-    }
-
-    #instructions {
-        height: 25%;
-    }
-
-    .game-button {
-        padding: 10px 15px;
-        font-size: 14px;
-        bottom: 80px;
-    }
 }
