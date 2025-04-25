@@ -1,4 +1,4 @@
-var version = 'v1:0:27';
+var version = 'v1:0:28'; // Version du cache
 
 self.addEventListener("install", function(event) {
   self.skipWaiting();
