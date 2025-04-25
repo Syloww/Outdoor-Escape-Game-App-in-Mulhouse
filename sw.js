@@ -7,9 +7,9 @@ self.addEventListener("install", function(event) {
       .then(function(cache) {
         return cache.addAll([
           '/',
-          'index.php',
+          'index.html',
           'manifest.json',
-		  'salim.php'
+		  'salim.html'
         ]);
       })
 	);
