@@ -799,35 +799,56 @@
 
         window.onload = initGame;
 
-        // Cheatcode Triple Tap
-let tapCount = 0;
-let lastTapTime = 0;
+// Cheatcode Triple Tap corrigé
+let lastThreeTaps = [0, 0, 0];
+let tapIndex = 0;
+const TAP_THRESHOLD = 300; // 300ms entre les taps
 
-document.getElementById('game-area').addEventListener('touchend', (e) => {
-    const currentTime = new Date().getTime();
-    const tapDelay = currentTime - lastTapTime;
-
-    if (tapDelay < 500 && tapDelay > 0) {
-        tapCount++;
-        if (tapCount === 3) {
-            // Activation du cheatcode
-            score += 300; // +300 points
-            poppedBalloonsCount += 3; // Compte 3 ballons popés
+function handleTripleTap(e) {
+    const now = Date.now();
+    
+    // Enregistrer le temps du tap
+    lastThreeTaps[tapIndex % 3] = now;
+    tapIndex++;
+    
+    // Vérifier la séquence
+    if (tapIndex >= 3) {
+        const timeDiff1 = lastThreeTaps[1] - lastThreeTaps[0];
+        const timeDiff2 = lastThreeTaps[2] - lastThreeTaps[1];
+        
+        if (timeDiff1 < TAP_THRESHOLD && timeDiff2 < TAP_THRESHOLD) {
+            // Activer le cheat
+            const gameArea = document.getElementById('game-area');
+            const rect = gameArea.getBoundingClientRect();
+            
+            // Coordonnées ajustées
+            const x = e.changedTouches[0].clientX - rect.left;
+            const y = e.changedTouches[0].clientY - rect.top;
+            
+            // Effets
+            score += 500;
+            poppedBalloonsCount += 3;
             updateScore();
+            createExplosion(x, y, 600);
             
-            // Effet visuel
-            createExplosion(e.changedTouches[0].clientX, e.changedTouches[0].clientY, 600);
+            // Feedback visuel
             document.body.style.backgroundColor = 'gold';
-            setTimeout(() => document.body.style.backgroundColor = '#000', 200);
+            setTimeout(() => {
+                document.body.style.backgroundColor = '#000';
+            }, 200);
             
-            // Réinitialisation
-            tapCount = 0;
-            lastTapTime = 0;
+            // Réinitialiser
+            tapIndex = 0;
+            lastThreeTaps = [0, 0, 0];
         }
-    } else {
-        tapCount = 1;
     }
-    lastTapTime = currentTime;
+}
+
+// Remplacer l'ancien écouteur touchend
+document.getElementById('game-area').removeEventListener('touchend', handleTouchEnd);
+document.getElementById('game-area').addEventListener('touchend', function(e) {
+    handleTouchEnd(e);
+    handleTripleTap(e);
 });
     </script>
 </body>
